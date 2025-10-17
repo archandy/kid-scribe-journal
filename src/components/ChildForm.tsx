@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { PhotoCropper } from "@/components/PhotoCropper";
 import {
   Form,
   FormControl,
@@ -53,6 +54,7 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(initialData?.photo_url);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -89,7 +91,18 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
       return;
     }
 
+    // Create preview URL for cropping
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageToCrop(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImage: Blob) => {
     setIsUploading(true);
+    setImageToCrop(null);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -107,14 +120,13 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
         }
       }
 
-      // Upload new photo
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      // Upload cropped photo
+      const fileName = `${Math.random().toString(36).substring(2)}.jpg`;
       const filePath = `${session.user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("child-photos")
-        .upload(filePath, file);
+        .upload(filePath, croppedImage);
 
       if (uploadError) throw uploadError;
 
@@ -134,6 +146,10 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
     }
   };
 
+  const handleCropCancel = () => {
+    setImageToCrop(null);
+  };
+
   const handleRemovePhoto = () => {
     setPhotoUrl(undefined);
     form.setValue("photo_url", "");
@@ -151,8 +167,16 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
   const watchedBirthdate = form.watch("birthdate");
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+    <>
+      {imageToCrop && (
+        <PhotoCropper
+          image={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="photo_url"
@@ -287,5 +311,6 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
         </div>
       </form>
     </Form>
+    </>
   );
 };
