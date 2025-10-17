@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2 } from "lucide-react";
+import { Mic, Square, Loader2, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReviewSheet from "@/components/ReviewSheet";
 import NotesList from "@/components/NotesList";
+import { useNavigate } from "react-router-dom";
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -15,6 +16,8 @@ const Record = () => {
   const [showReview, setShowReview] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
+  
+  const navigate = useNavigate();
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -180,13 +183,23 @@ const Record = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
       {/* Header */}
-      <header className="p-4 border-b border-border bg-card/50 backdrop-blur-sm">
-        <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-          Kids Journal
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Capture moments, preserve memories
-        </p>
+      <header className="p-4 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+            Kids Journal
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Capture moments, preserve memories
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate('/settings')}
+          className="rounded-full"
+        >
+          <SettingsIcon className="h-5 w-5" />
+        </Button>
       </header>
 
       {/* Main Content */}

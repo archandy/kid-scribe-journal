@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, Database, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReviewSheetProps {
   open: boolean;
@@ -78,12 +79,41 @@ const ReviewSheet = ({
     
     setIsSaving(true);
     try {
-      // This will call Lovable Cloud edge function
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Saved to Notion! Connect Lovable Cloud to enable.");
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please sign in to save to Notion");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('save-to-notion', {
+        body: {
+          transcript: editedTranscript,
+          audioUrl: audioUrl,
+          children: selectedChildren,
+          tags: selectedTags,
+          sentiment: sentiment,
+          duration: duration,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Saved to Notion successfully!", {
+        description: data?.url ? "Click to open in Notion" : undefined,
+        action: data?.url ? {
+          label: "Open",
+          onClick: () => window.open(data.url, '_blank'),
+        } : undefined,
+      });
+      
       onSaved();
     } catch (error) {
-      toast.error("Failed to save to Notion");
+      console.error('Error saving to Notion:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save to Notion';
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
