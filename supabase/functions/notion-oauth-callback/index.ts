@@ -42,16 +42,23 @@ Deno.serve(async (req) => {
     const tokenData = await tokenResponse.json();
     console.log('Token exchange successful');
 
-    // Get user from auth header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    // Get user from auth header or state parameter (for mobile redirect flow)
+    let authHeader = req.headers.get('Authorization');
+    
+    // If no auth header, try to get from state (mobile flow)
+    let userToken = authHeader;
+    if (!userToken && state) {
+      userToken = `Bearer ${state}`;
+    }
+    
+    if (!userToken) {
+      throw new Error('No authorization provided');
     }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: userToken } } }
     );
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -77,7 +84,51 @@ Deno.serve(async (req) => {
 
     console.log('Token stored successfully');
 
-    // Return HTML that closes the popup and notifies parent
+    // Check if this is a mobile redirect flow (no opener window)
+    const isMobileFlow = !!state;
+    
+    if (isMobileFlow) {
+      // Mobile flow - redirect back to settings
+      return new Response(
+        `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Notion Connected</title>
+            <meta http-equiv="refresh" content="2;url=/settings">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+              }
+              .container {
+                text-align: center;
+              }
+              h1 { margin: 0 0 16px; }
+              p { opacity: 0.9; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>✓ Connected to Notion</h1>
+              <p>Redirecting back to settings...</p>
+            </div>
+          </body>
+        </html>
+        `,
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+        }
+      );
+    }
+
+    // Desktop popup flow
     return new Response(
       `
       <!DOCTYPE html>

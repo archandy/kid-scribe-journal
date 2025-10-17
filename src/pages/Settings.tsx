@@ -70,19 +70,31 @@ export default function Settings() {
       const clientId = import.meta.env.VITE_NOTION_CLIENT_ID;
       const redirectUri = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notion-oauth-callback`;
       
-      const authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      // Get user session token
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Open in popup
-      const width = 600;
-      const height = 700;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
+      // Detect mobile and use redirect with state parameter instead of popup
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      window.open(
-        authUrl,
-        'Notion OAuth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+      let authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      
+      if (isMobile && session?.access_token) {
+        // Pass auth token in state for mobile flow
+        authUrl += `&state=${encodeURIComponent(session.access_token)}`;
+        window.location.href = authUrl;
+      } else {
+        // Open in popup on desktop
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        window.open(
+          authUrl,
+          'Notion OAuth',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+      }
     } catch (error) {
       console.error('Error connecting to Notion:', error);
       toast({
