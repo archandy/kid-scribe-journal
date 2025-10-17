@@ -75,6 +75,8 @@ Deno.serve(async (req) => {
         access_token: tokenData.access_token,
         workspace_id: tokenData.workspace_id,
         workspace_name: tokenData.workspace_name,
+      }, {
+        onConflict: 'user_id'
       });
 
     if (insertError) {
