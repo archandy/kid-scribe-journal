@@ -12,10 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface ReviewSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  audioBlob: Blob;
-  audioUrl: string | null;
   transcript: string;
-  isTranscribing: boolean;
   duration: number;
   onSaved: () => void;
 }
@@ -32,10 +29,7 @@ const SENTIMENTS = [
 const ReviewSheet = ({
   open,
   onOpenChange,
-  audioBlob,
-  audioUrl,
   transcript,
-  isTranscribing,
   duration,
   onSaved,
 }: ReviewSheetProps) => {
@@ -122,7 +116,6 @@ const ReviewSheet = ({
         body: {
           transcript: editedTranscript,
           summary: summary,
-          audioUrl: audioUrl,
           children: selectedChildren,
           tags: selectedTags,
           sentiment: sentiment,
@@ -163,14 +156,6 @@ const ReviewSheet = ({
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
-          {/* Audio Player */}
-          {audioUrl && (
-            <div className="space-y-2">
-              <Label>Audio Recording ({duration}s)</Label>
-              <audio controls src={audioUrl} className="w-full" />
-            </div>
-          )}
-
           {/* Summary */}
           <div className="space-y-2">
             <Label htmlFor="summary">AI Summary</Label>
@@ -189,20 +174,13 @@ const ReviewSheet = ({
           {/* Transcript */}
           <div className="space-y-2">
             <Label htmlFor="transcript">Transcript</Label>
-            {isTranscribing ? (
-              <div className="flex items-center gap-2 p-4 border rounded-lg">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Transcribing audio...</span>
-              </div>
-            ) : (
-              <Textarea
-                id="transcript"
-                value={editedTranscript}
-                onChange={(e) => setEditedTranscript(e.target.value)}
-                placeholder="Transcript will appear here..."
-                className="min-h-32"
-              />
-            )}
+            <Textarea
+              id="transcript"
+              value={editedTranscript}
+              onChange={(e) => setEditedTranscript(e.target.value)}
+              placeholder="Your speech will appear here..."
+              className="min-h-32"
+            />
           </div>
 
           {/* Children Selection */}
@@ -270,7 +248,7 @@ const ReviewSheet = ({
             <Button
               size="lg"
               onClick={saveToNotion}
-              disabled={isSaving || isTranscribing}
+              disabled={isSaving}
               className="w-full bg-primary"
             >
               {isSaving ? (
@@ -290,7 +268,7 @@ const ReviewSheet = ({
               size="lg"
               variant="secondary"
               onClick={saveLocally}
-              disabled={isSaving || isTranscribing}
+              disabled={isSaving}
               className="w-full"
             >
               <Save className="mr-2 h-4 w-4" />

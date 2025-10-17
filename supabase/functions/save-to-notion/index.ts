@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const parentPageId = tokenData.database_id;
 
     // Get note data from request
-    const { transcript, summary, audioUrl, children, tags, sentiment, duration, location } = await req.json();
+    const { transcript, summary, children, tags, sentiment, duration, location } = await req.json();
 
     if (!transcript) {
       throw new Error('Transcript is required');
@@ -115,17 +115,6 @@ Deno.serve(async (req) => {
         rich_text: [{ type: 'text', text: { content: transcript } }],
       },
     });
-
-    // Add audio URL if available
-    if (audioUrl) {
-      contentBlocks.push({
-        object: 'block',
-        type: 'bookmark',
-        bookmark: {
-          url: audioUrl,
-        },
-      });
-    }
 
     // Determine parent
     let parent;

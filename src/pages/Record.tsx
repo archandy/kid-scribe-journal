@@ -10,23 +10,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [showReview, setShowReview] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   const navigate = useNavigate();
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     // Check authentication
@@ -52,63 +48,32 @@ const Record = () => {
       subscription.unsubscribe();
       if (timerRef.current) clearInterval(timerRef.current);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      if (recognitionRef.current) recognitionRef.current.stop();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     };
-  }, [audioUrl, navigate]);
+  }, [navigate]);
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Check for Web Speech API support
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
-      // Check supported MIME types
-      const mimeTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/mp4',
-      ];
-      
-      let selectedMimeType = '';
-      for (const type of mimeTypes) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          selectedMimeType = type;
-          break;
-        }
+      if (!SpeechRecognition) {
+        toast.error("Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.");
+        return;
       }
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: selectedMimeType || undefined,
+      // Get microphone for visualization
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
       });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: selectedMimeType });
-        setAudioBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Start transcription
-        setIsTranscribing(true);
-        setShowReview(true);
-        
-        try {
-          await transcribeAudio(blob);
-        } catch (error) {
-          console.error("Transcription error:", error);
-          toast.error("Failed to transcribe audio. You can still save it locally.");
-          setIsTranscribing(false);
-        }
-      };
+      streamRef.current = stream;
 
       // Set up audio visualization
       const audioContext = new AudioContext();
@@ -117,35 +82,95 @@ const Record = () => {
       analyser.fftSize = 256;
       source.connect(analyser);
       analyserRef.current = analyser;
-      
-      visualize();
 
-      mediaRecorder.start();
-      setIsRecording(true);
+      // Set up speech recognition
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      let finalTranscript = '';
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptPiece = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPiece + ' ';
+          } else {
+            interimTranscript += transcriptPiece;
+          }
+        }
+
+        setTranscript(finalTranscript + interimTranscript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'no-speech') {
+          toast.error("No speech detected. Please try speaking.");
+        } else if (event.error === 'not-allowed') {
+          toast.error("Microphone access denied. Please check permissions.");
+        } else {
+          toast.error("Error during speech recognition.");
+        }
+      };
+
+      recognition.onend = () => {
+        // Clean up microphone stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        
+        if (finalTranscript.trim()) {
+          setTranscript(finalTranscript.trim());
+          setShowReview(true);
+        } else {
+          toast.error("No speech was detected. Please try again.");
+          setTranscript('');
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
       
+      setIsRecording(true);
+      setRecordingTime(0);
+      setTranscript('');
+      
+      // Start timer
       timerRef.current = window.setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
 
-      toast.success("Recording started");
+      // Start visualization
+      visualize();
+
+      toast.success("Recording started - speak now");
     } catch (error) {
-      console.error("Error starting recording:", error);
-      toast.error("Failed to access microphone. Please check permissions.");
+      console.error('Error starting recording:', error);
+      toast.error("Could not access microphone. Please check permissions.");
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
       setIsRecording(false);
+      
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
+
+      toast.success("Recording stopped");
     }
   };
 
@@ -188,19 +213,6 @@ const Record = () => {
     draw();
   };
 
-  const transcribeAudio = async (blob: Blob) => {
-    // Simulate transcription - will be replaced with real OpenAI Whisper API
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const sampleTranscript = "This is a simulated transcript. The audio was successfully recorded! To enable real transcription with OpenAI Whisper, you'll need to add an edge function that calls the Whisper API.";
-      setTranscript(sampleTranscript);
-    } catch (error) {
-      console.error("Transcription error:", error);
-      toast.error("Transcription failed");
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
 
   const handleSignOut = async () => {
     try {
@@ -327,24 +339,16 @@ const Record = () => {
       )}
 
       {/* Review Sheet */}
-      {showReview && audioBlob && (
+      {showReview && transcript && (
         <ReviewSheet
           open={showReview}
           onOpenChange={setShowReview}
-          audioBlob={audioBlob}
-          audioUrl={audioUrl}
           transcript={transcript}
-          isTranscribing={isTranscribing}
           duration={recordingTime}
           onSaved={() => {
             setShowReview(false);
             setRecordingTime(0);
-            setAudioBlob(null);
             setTranscript("");
-            if (audioUrl) {
-              URL.revokeObjectURL(audioUrl);
-              setAudioUrl(null);
-            }
           }}
         />
       )}
