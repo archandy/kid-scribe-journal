@@ -65,17 +65,17 @@ const Children = () => {
   };
 
   const calculateAge = (birthdate: string) => {
+    const [year, month, day] = birthdate.split('-').map(Number);
     const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    let age = today.getFullYear() - year;
+    const monthDiff = today.getMonth() + 1 - month;
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < day)) {
       age--;
     }
     return age;
   };
 
-  const handleSubmit = async (data: { name: string; birthdate: Date; photo_url?: string; id?: string }) => {
+  const handleSubmit = async (data: { name: string; birthdate: string; photo_url?: string; id?: string }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -86,7 +86,7 @@ const Children = () => {
 
       const childData = {
         name: data.name,
-        birthdate: data.birthdate.toISOString().split('T')[0],
+        birthdate: data.birthdate,
         photo_url: data.photo_url || null,
         user_id: session.user.id,
       };

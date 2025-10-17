@@ -2,12 +2,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { PhotoCropper } from "@/components/PhotoCropper";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -17,11 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,9 +23,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  birthdate: z.date({
-    required_error: "Birthdate is required",
-  }),
+  birthdate: z.string().min(1, "Birthdate is required"),
   photo_url: z.string().optional(),
 });
 
@@ -60,16 +52,18 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      birthdate: initialData?.birthdate ? new Date(initialData.birthdate) : undefined,
+      birthdate: initialData?.birthdate || "",
       photo_url: initialData?.photo_url || "",
     },
   });
 
-  const calculateAge = (birthdate: Date) => {
+  const calculateAge = (birthdate: string) => {
+    if (!birthdate) return null;
+    const [year, month, day] = birthdate.split('-').map(Number);
     const today = new Date();
-    let age = today.getFullYear() - birthdate.getFullYear();
-    const monthDiff = today.getMonth() - birthdate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+    let age = today.getFullYear() - year;
+    const monthDiff = today.getMonth() + 1 - month;
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < day)) {
       age--;
     }
     return age;
@@ -165,6 +159,40 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
   };
 
   const watchedBirthdate = form.watch("birthdate");
+  const age = calculateAge(watchedBirthdate);
+
+  // Generate year options (current year to 100 years ago)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  // Parse current birthdate
+  const [selectedYear, selectedMonth, selectedDay] = watchedBirthdate 
+    ? watchedBirthdate.split('-').map(Number) 
+    : [null, null, null];
+
+  const handleDateChange = (type: 'year' | 'month' | 'day', value: string) => {
+    const currentValue = watchedBirthdate || `${currentYear}-01-01`;
+    const [year, month, day] = currentValue.split('-');
+    
+    let newYear = year;
+    let newMonth = month;
+    let newDay = day;
+
+    if (type === 'year') newYear = value;
+    if (type === 'month') newMonth = value.padStart(2, '0');
+    if (type === 'day') newDay = value.padStart(2, '0');
+
+    // Validate day doesn't exceed month's max days
+    const maxDays = new Date(Number(newYear), Number(newMonth), 0).getDate();
+    if (Number(newDay) > maxDays) {
+      newDay = maxDays.toString().padStart(2, '0');
+    }
+
+    const newDate = `${newYear}-${newMonth}-${newDay}`;
+    form.setValue('birthdate', newDate);
+  };
 
   return (
     <>
@@ -246,51 +274,72 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
         <FormField
           control={form.control}
           name="birthdate"
-          render={({ field }) => (
+          render={() => (
             <FormItem className="flex flex-col">
               <FormLabel>{t('children.birthdate')}</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>{t('children.selectDate')}</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Select 
+                    value={selectedYear?.toString() || ""} 
+                    onValueChange={(value) => handleDateChange('year', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Select 
+                    value={selectedMonth?.toString() || ""} 
+                    onValueChange={(value) => handleDateChange('month', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map((month) => (
+                        <SelectItem key={month} value={month.toString()}>
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Select 
+                    value={selectedDay?.toString() || ""} 
+                    onValueChange={(value) => handleDateChange('day', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {days.map((day) => (
+                        <SelectItem key={day} value={day.toString()}>
+                          {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {watchedBirthdate && (
+        {age !== null && (
           <div className="p-3 bg-muted rounded-lg">
             <FormLabel>{t('children.age')}</FormLabel>
             <p className="text-2xl font-semibold mt-1">
-              {calculateAge(watchedBirthdate)} {t('children.yearsOld')}
+              {age} {t('children.yearsOld')}
             </p>
           </div>
         )}
