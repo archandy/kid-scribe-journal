@@ -7,6 +7,7 @@ import { Loader2, Database, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReviewSheetProps {
   open: boolean;
@@ -31,6 +32,7 @@ const ReviewSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const { t } = useLanguage();
 
   // Generate summary when sheet opens
   useEffect(() => {
@@ -98,7 +100,7 @@ const ReviewSheet = ({
         throw error;
       }
 
-      toast.success("Saved to Notion successfully!", {
+      toast.success(t('review.savedSuccess'), {
         description: data?.url ? "Click to open in Notion" : undefined,
         action: data?.url ? {
           label: "Open",
@@ -121,9 +123,9 @@ const ReviewSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Review & Save</SheetTitle>
+          <SheetTitle>{t('review.title')}</SheetTitle>
           <SheetDescription>
-            Review your reflection and save to Notion
+            {t('review.description')}
           </SheetDescription>
         </SheetHeader>
 
@@ -131,21 +133,21 @@ const ReviewSheet = ({
           {/* Structured Content Preview */}
           <div className="space-y-4">
             <div>
-              <Label className="text-primary font-semibold">📝 What happened:</Label>
+              <Label className="text-primary font-semibold">{t('review.whatHappened')}</Label>
               <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
                 {stepAnswers[0]}
               </p>
             </div>
             
             <div>
-              <Label className="text-primary font-semibold">👶 How they behaved:</Label>
+              <Label className="text-primary font-semibold">{t('review.howBehaved')}</Label>
               <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
                 {stepAnswers[1]}
               </p>
             </div>
             
             <div>
-              <Label className="text-primary font-semibold">💡 What that shows:</Label>
+              <Label className="text-primary font-semibold">{t('review.whatShows')}</Label>
               <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
                 {stepAnswers[2]}
               </p>
@@ -154,11 +156,11 @@ const ReviewSheet = ({
 
           {/* Summary */}
           <div className="space-y-2">
-            <Label className="text-primary font-semibold">✨ Summary</Label>
+            <Label className="text-primary font-semibold">{t('review.summary')}</Label>
             {isGeneratingSummary ? (
               <div className="flex items-center gap-2 p-4 border rounded-lg">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Generating summary...</span>
+                <span className="text-sm text-muted-foreground">{t('review.generatingSummary')}</span>
               </div>
             ) : summary ? (
               <div className="p-4 border rounded-lg bg-muted/50">
@@ -169,7 +171,7 @@ const ReviewSheet = ({
 
           {/* Children Selection (Optional) */}
           <div className="space-y-3">
-            <Label>Children (Optional)</Label>
+            <Label>{t('review.children')}</Label>
             <div className="flex flex-wrap gap-2">
               {CHILDREN.map((child) => (
                 <Badge
@@ -198,12 +200,12 @@ const ReviewSheet = ({
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving to Notion...
+                  {t('review.savingToNotion')}
                 </>
               ) : (
                 <>
                   <Database className="mr-2 h-4 w-4" />
-                  Save to Notion
+                  {t('review.saveToNotion')}
                 </>
               )}
             </Button>
@@ -215,7 +217,7 @@ const ReviewSheet = ({
               className="w-full"
             >
               <X className="mr-2 h-4 w-4" />
-              Cancel
+              {t('review.cancel')}
             </Button>
           </div>
         </div>

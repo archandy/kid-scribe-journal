@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Check if already logged in
@@ -49,13 +52,16 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
       <Card className="w-full max-w-md border-border/50 shadow-elegant bg-card/50 backdrop-blur">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-3xl bg-gradient-hero bg-clip-text text-transparent">
-            Welcome
+            {t('auth.welcome')}
           </CardTitle>
           <CardDescription>
-            Sign in with your Google account to continue
+            {t('auth.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,7 +89,7 @@ export default function Auth() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with Google
+            {t('auth.signIn')} Google
           </Button>
         </CardContent>
       </Card>

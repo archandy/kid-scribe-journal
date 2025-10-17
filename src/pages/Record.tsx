@@ -1,17 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut, ChevronRight } from "lucide-react";
+import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReviewSheet from "@/components/ReviewSheet";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
-const PROMPTS = [
-  "What happened?",
-  "How did they behave?",
-  "What does that show?"
-];
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -23,6 +19,22 @@ const Record = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
+
+  const PROMPTS = [
+    t('record.prompt1'),
+    t('record.prompt2'),
+    t('record.prompt3')
+  ];
+
+  const getLanguageCode = () => {
+    const languageMap: Record<string, string> = {
+      'en': 'en-US',
+      'ja': 'ja-JP',
+      'ko': 'ko-KR'
+    };
+    return languageMap[language] || 'en-US';
+  };
   
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
@@ -94,7 +106,7 @@ const Record = () => {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = getLanguageCode();
 
       let finalTranscript = '';
 
@@ -275,13 +287,14 @@ const Record = () => {
       <header className="p-4 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            Kids Journal
+            {t('app.title')}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Capture moments, preserve memories
+            {t('app.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
+          <LanguageSelector />
           <Button
             variant="ghost"
             size="icon"
@@ -318,7 +331,7 @@ const Record = () => {
 
         {/* Current Step Prompt */}
         <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">Step {currentStep + 1} of 3</p>
+          <p className="text-sm text-muted-foreground">{t('record.step')} {currentStep + 1} {t('record.of')} 3</p>
           <h2 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
             {PROMPTS[currentStep]}
           </h2>
@@ -389,8 +402,8 @@ const Record = () => {
         {!isRecording && currentStep < 3 && (
           <p className="text-sm text-muted-foreground text-center max-w-xs">
             {currentStep === 0 
-              ? "Tap to start recording your first response"
-              : "Tap to continue to the next question"}
+              ? t('record.tapToStart')
+              : t('record.tapToContinue')}
           </p>
         )}
 

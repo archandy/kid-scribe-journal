@@ -5,8 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export default function Settings() {
   const [databaseId, setDatabaseId] = useState("");
@@ -14,6 +16,7 @@ export default function Settings() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     checkConnection();
@@ -169,6 +172,24 @@ export default function Settings() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: t('settings.signOut'),
+        description: "Signed out successfully",
+      });
+      navigate('/auth');
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -180,86 +201,103 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background p-4 pb-24">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">Settings</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
+          </div>
+          <LanguageSelector />
         </div>
 
-        <Card className="border-border/50 shadow-elegant bg-card/50 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
-              Notion Integration
-            </CardTitle>
-            <CardDescription>
-              Connect your Notion workspace to save journal entries
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-background/50">
-              <div className="flex items-center gap-3">
+        <div className="space-y-4">
+          <Card className="border-border/50 shadow-elegant bg-card/50 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="h-5 w-5" />
+                {t('settings.notion')}
+              </CardTitle>
+              <CardDescription>
+                {t('settings.notionDesc')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-background/50">
+                <div className="flex items-center gap-3">
+                  {isConnected ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <div>
+                        <p className="font-medium">{t('settings.connected')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Your workspace is linked
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{t('settings.notConnected')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Connect to start saving entries
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
                 {isConnected ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium">Connected to Notion</p>
-                      <p className="text-sm text-muted-foreground">
-                        Your workspace is linked
-                      </p>
-                    </div>
-                  </>
+                  <Button variant="outline" onClick={disconnectNotion}>
+                    {t('settings.disconnect')}
+                  </Button>
                 ) : (
-                  <>
-                    <XCircle className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Not connected</p>
-                      <p className="text-sm text-muted-foreground">
-                        Connect to start saving entries
-                      </p>
-                    </div>
-                  </>
+                  <Button onClick={connectToNotion}>
+                    {t('settings.connect')}
+                  </Button>
                 )}
               </div>
-              {isConnected ? (
-                <Button variant="outline" onClick={disconnectNotion}>
-                  Disconnect
-                </Button>
-              ) : (
-                <Button onClick={connectToNotion}>
-                  Connect to Notion
-                </Button>
-              )}
-            </div>
 
-            {isConnected && (
-              <div className="space-y-3">
-                <Label htmlFor="database-id">
-                  Parent Page ID (Optional)
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="database-id"
-                    placeholder="Leave empty to create in workspace root"
-                    value={databaseId}
-                    onChange={(e) => setDatabaseId(e.target.value)}
-                  />
-                  <Button onClick={saveDatabaseId}>
-                    Save
-                  </Button>
+              {isConnected && (
+                <div className="space-y-3">
+                  <Label htmlFor="database-id">
+                    Parent Page ID (Optional)
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="database-id"
+                      placeholder="Leave empty to create in workspace root"
+                      value={databaseId}
+                      onChange={(e) => setDatabaseId(e.target.value)}
+                    />
+                    <Button onClick={saveDatabaseId}>
+                      {t('common.save')}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Optional: Provide a Notion page ID to create journal entries as sub-pages. Leave empty to create pages in your workspace root.
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Optional: Provide a Notion page ID to create journal entries as sub-pages. Leave empty to create pages in your workspace root.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50 shadow-elegant bg-card/50 backdrop-blur">
+            <CardHeader>
+              <CardTitle>{t('settings.account')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                {t('settings.signOut')}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
