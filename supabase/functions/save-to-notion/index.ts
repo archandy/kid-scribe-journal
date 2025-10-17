@@ -49,9 +49,12 @@ Deno.serve(async (req) => {
       throw new Error('Structured content is required');
     }
 
-    // Create title from date and children
+    // Create title from date and children using UTC to avoid timezone issues
     const date = new Date();
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const year = date.getUTCFullYear();
+    const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+    const day = date.getUTCDate();
+    const dateStr = `${month} ${day}, ${year}`;
     const childStr = children && children.length > 0 ? ` - ${children.join(', ')}` : '';
     const title = `${dateStr}${childStr}`;
 
