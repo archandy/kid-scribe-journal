@@ -53,6 +53,11 @@ Deno.serve(async (req) => {
     // Extract title from transcript (first 60 chars)
     const title = transcript.substring(0, 60) + (transcript.length > 60 ? '...' : '');
 
+    // Clean database ID (remove hyphens if present)
+    const cleanDatabaseId = tokenData.database_id.replace(/-/g, '');
+    console.log('Using database ID:', cleanDatabaseId);
+    console.log('Access token length:', tokenData.access_token.length);
+
     // Create Notion page
     const notionResponse = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
@@ -62,7 +67,7 @@ Deno.serve(async (req) => {
         'Notion-Version': '2022-06-28',
       },
       body: JSON.stringify({
-        parent: { database_id: tokenData.database_id },
+        parent: { database_id: cleanDatabaseId },
         properties: {
           'Title': {
             title: [{ text: { content: title } }],
