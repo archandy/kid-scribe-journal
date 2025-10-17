@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Settings as SettingsIcon } from "lucide-react";
+import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReviewSheet from "@/components/ReviewSheet";
 import NotesList from "@/components/NotesList";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -16,6 +17,7 @@ const Record = () => {
   const [showReview, setShowReview] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   const navigate = useNavigate();
   
@@ -27,12 +29,32 @@ const Record = () => {
   const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Check authentication
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+    
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
     return () => {
+      subscription.unsubscribe();
       if (timerRef.current) clearInterval(timerRef.current);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
-  }, [audioUrl]);
+  }, [audioUrl, navigate]);
 
   const startRecording = async () => {
     try {
@@ -167,11 +189,28 @@ const Record = () => {
   };
 
   const transcribeAudio = async (blob: Blob) => {
-    // This will be connected to Lovable Cloud edge function
-    // For now, simulate transcription
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setTranscript("This is a simulated transcript. Connect Lovable Cloud to enable real transcription with OpenAI Whisper.");
-    setIsTranscribing(false);
+    // Simulate transcription - will be replaced with real OpenAI Whisper API
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const sampleTranscript = "This is a simulated transcript. The audio was successfully recorded! To enable real transcription with OpenAI Whisper, you'll need to add an edge function that calls the Whisper API.";
+      setTranscript(sampleTranscript);
+    } catch (error) {
+      console.error("Transcription error:", error);
+      toast.error("Transcription failed");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate('/auth');
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("Failed to sign out");
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -179,6 +218,14 @@ const Record = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
@@ -192,14 +239,24 @@ const Record = () => {
             Capture moments, preserve memories
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/settings')}
-          className="rounded-full"
-        >
-          <SettingsIcon className="h-5 w-5" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/settings')}
+            className="rounded-full"
+          >
+            <SettingsIcon className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            className="rounded-full"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,11 +39,18 @@ const ReviewSheet = ({
   duration,
   onSaved,
 }: ReviewSheetProps) => {
-  const [editedTranscript, setEditedTranscript] = useState(transcript);
+  const [editedTranscript, setEditedTranscript] = useState("");
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sentiment, setSentiment] = useState("positive");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Update transcript when prop changes
+  useEffect(() => {
+    if (transcript) {
+      setEditedTranscript(transcript);
+    }
+  }, [transcript]);
 
   const toggleChild = (child: string) => {
     setSelectedChildren(prev =>
