@@ -64,6 +64,24 @@ Deno.serve(async (req) => {
     console.log('Using database ID:', formattedDatabaseId);
     console.log('Access token length:', tokenData.access_token.length);
 
+    // Test: Try to retrieve the database to verify access
+    console.log('Testing database access...');
+    const testResponse = await fetch(`https://api.notion.com/v1/databases/${formattedDatabaseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+        'Notion-Version': '2022-06-28',
+      },
+    });
+
+    if (!testResponse.ok) {
+      const testError = await testResponse.text();
+      console.error('Database access test failed:', testResponse.status, testError);
+      throw new Error(`Cannot access database. Please ensure: 1) The database ID is correct, 2) Your Notion integration has been added to this database via "..." → "Connections". Error: ${testError}`);
+    }
+
+    console.log('Database access verified successfully');
+
     // Create Notion page
     const notionResponse = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
