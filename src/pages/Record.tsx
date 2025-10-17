@@ -1,18 +1,25 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReviewSheet from "@/components/ReviewSheet";
-import NotesList from "@/components/NotesList";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+
+const PROMPTS = [
+  "What happened?",
+  "How did they behave?",
+  "What does that show?"
+];
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [stepAnswers, setStepAnswers] = useState<string[]>(["", "", ""]);
+  const [currentTranscript, setCurrentTranscript] = useState("");
   const [showReview, setShowReview] = useState(false);
-  const [transcript, setTranscript] = useState("");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   const navigate = useNavigate();
@@ -103,7 +110,7 @@ const Record = () => {
           }
         }
 
-        setTranscript(finalTranscript + interimTranscript);
+        setCurrentTranscript(finalTranscript + interimTranscript);
       };
 
       recognition.onerror = (event: any) => {
@@ -125,11 +132,26 @@ const Record = () => {
         }
         
         if (finalTranscript.trim()) {
-          setTranscript(finalTranscript.trim());
-          setShowReview(true);
+          const trimmedTranscript = finalTranscript.trim();
+          setCurrentTranscript(trimmedTranscript);
+          
+          // Save answer for current step
+          const newAnswers = [...stepAnswers];
+          newAnswers[currentStep] = trimmedTranscript;
+          setStepAnswers(newAnswers);
+          
+          // Move to next step or show review
+          if (currentStep < 2) {
+            setTimeout(() => {
+              setCurrentStep(currentStep + 1);
+              setCurrentTranscript("");
+            }, 1000);
+          } else {
+            setShowReview(true);
+          }
         } else {
           toast.error("No speech was detected. Please try again.");
-          setTranscript('');
+          setCurrentTranscript('');
         }
       };
 
@@ -138,7 +160,7 @@ const Record = () => {
       
       setIsRecording(true);
       setRecordingTime(0);
-      setTranscript('');
+      setCurrentTranscript('');
       
       // Start timer
       timerRef.current = window.setInterval(() => {
@@ -148,7 +170,7 @@ const Record = () => {
       // Start visualization
       visualize();
 
-      toast.success("Recording started - speak now");
+      toast.success(`Recording Step ${currentStep + 1} - ${PROMPTS[currentStep]}`);
     } catch (error) {
       console.error('Error starting recording:', error);
       toast.error("Could not access microphone. Please check permissions.");
@@ -170,8 +192,16 @@ const Record = () => {
         animationRef.current = null;
       }
 
-      toast.success("Recording stopped");
+      toast.success("Processing your answer...");
     }
+  };
+
+  const resetSteps = () => {
+    setCurrentStep(0);
+    setStepAnswers(["", "", ""]);
+    setCurrentTranscript("");
+    setShowReview(false);
+    setRecordingTime(0);
   };
 
   const visualize = () => {
@@ -273,6 +303,27 @@ const Record = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
+        {/* Step Progress */}
+        <div className="flex items-center gap-2">
+          {PROMPTS.map((_, index) => (
+            <div
+              key={index}
+              className={cn(
+                "h-2 w-12 rounded-full transition-all",
+                index <= currentStep ? "bg-primary" : "bg-muted"
+              )}
+            />
+          ))}
+        </div>
+
+        {/* Current Step Prompt */}
+        <div className="text-center space-y-2">
+          <p className="text-sm text-muted-foreground">Step {currentStep + 1} of 3</p>
+          <h2 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+            {PROMPTS[currentStep]}
+          </h2>
+        </div>
+
         {/* Waveform Canvas */}
         {isRecording && (
           <div className="w-full max-w-md animate-slide-up">
@@ -285,13 +336,24 @@ const Record = () => {
           </div>
         )}
 
-        {/* Timer */}
-        {isRecording && (
-          <div className="text-center animate-slide-up">
-            <div className="text-5xl font-bold text-foreground tracking-tight">
-              {formatTime(recordingTime)}
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">Recording in progress</p>
+        {/* Current Transcript */}
+        {currentTranscript && (
+          <div className="w-full max-w-md p-4 bg-card/50 backdrop-blur-sm rounded-lg border border-border">
+            <p className="text-sm text-foreground">{currentTranscript}</p>
+          </div>
+        )}
+
+        {/* Completed Steps Preview */}
+        {currentStep > 0 && !isRecording && (
+          <div className="w-full max-w-md space-y-2">
+            {stepAnswers.slice(0, currentStep).map((answer, index) => (
+              answer && (
+                <div key={index} className="p-3 bg-card/30 rounded-lg border border-border/50">
+                  <p className="text-xs text-muted-foreground mb-1">{PROMPTS[index]}</p>
+                  <p className="text-sm text-foreground line-clamp-2">{answer}</p>
+                </div>
+              )
+            ))}
           </div>
         )}
 
@@ -324,31 +386,34 @@ const Record = () => {
           )}
         </div>
 
-        {!isRecording && (
+        {!isRecording && currentStep < 3 && (
           <p className="text-sm text-muted-foreground text-center max-w-xs">
-            Tap the microphone to start recording a voice note about your children
+            {currentStep === 0 
+              ? "Tap to start recording your first response"
+              : "Tap to continue to the next question"}
           </p>
+        )}
+
+        {/* Timer */}
+        {isRecording && (
+          <div className="text-center">
+            <div className="text-2xl font-bold text-foreground">
+              {formatTime(recordingTime)}
+            </div>
+          </div>
         )}
       </main>
 
-      {/* Notes List */}
-      {!isRecording && !showReview && (
-        <div className="p-6">
-          <NotesList />
-        </div>
-      )}
-
       {/* Review Sheet */}
-      {showReview && transcript && (
+      {showReview && stepAnswers.every(a => a) && (
         <ReviewSheet
           open={showReview}
           onOpenChange={setShowReview}
-          transcript={transcript}
+          stepAnswers={stepAnswers}
+          prompts={PROMPTS}
           duration={recordingTime}
           onSaved={() => {
-            setShowReview(false);
-            setRecordingTime(0);
-            setTranscript("");
+            resetSteps();
           }}
         />
       )}

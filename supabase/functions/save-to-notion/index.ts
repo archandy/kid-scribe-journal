@@ -43,50 +43,79 @@ Deno.serve(async (req) => {
     const parentPageId = tokenData.database_id;
 
     // Get note data from request
-    const { transcript, summary, children, tags, sentiment, duration, location } = await req.json();
+    const { structuredContent, summary, children, duration } = await req.json();
 
-    if (!transcript) {
-      throw new Error('Transcript is required');
+    if (!structuredContent) {
+      throw new Error('Structured content is required');
     }
 
-    // Extract title from transcript (first 60 chars)
-    const title = transcript.substring(0, 60) + (transcript.length > 60 ? '...' : '');
-    const date = new Date().toISOString();
+    // Create title from date and children
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const childStr = children && children.length > 0 ? ` - ${children.join(', ')}` : '';
+    const title = `${dateStr}${childStr}`;
 
     console.log('Creating Notion page with title:', title);
 
     // Build page content blocks
     const contentBlocks = [];
-    
-    // Add metadata section
-    const metadata = [];
-    if (children && children.length > 0) metadata.push(`👶 Children: ${children.join(', ')}`);
-    if (tags && tags.length > 0) metadata.push(`🏷️ Tags: ${tags.join(', ')}`);
-    if (sentiment) metadata.push(`😊 Sentiment: ${sentiment}`);
-    if (duration) metadata.push(`⏱️ Duration: ${Math.round(duration)}s`);
-    if (location) metadata.push(`📍 Location: ${location}`);
-    metadata.push(`📱 Source: mobile PWA`);
-    metadata.push(`📅 Date: ${new Date(date).toLocaleString()}`);
-    
-    if (metadata.length > 0) {
-      contentBlocks.push({
-        object: 'block',
-        type: 'callout',
-        callout: {
-          rich_text: [{ type: 'text', text: { content: metadata.join('\n') } }],
-          icon: { emoji: '📝' },
-          color: 'blue_background',
-        },
-      });
-    }
+
+    // Add structured content
+    contentBlocks.push({
+      object: 'block',
+      type: 'heading_3',
+      heading_3: {
+        rich_text: [{ type: 'text', text: { content: '📝 What happened:' } }],
+      },
+    });
+
+    contentBlocks.push({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: structuredContent.whatHappened } }],
+      },
+    });
+
+    contentBlocks.push({
+      object: 'block',
+      type: 'heading_3',
+      heading_3: {
+        rich_text: [{ type: 'text', text: { content: '👶 How they behaved:' } }],
+      },
+    });
+
+    contentBlocks.push({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: structuredContent.howTheyBehaved } }],
+      },
+    });
+
+    contentBlocks.push({
+      object: 'block',
+      type: 'heading_3',
+      heading_3: {
+        rich_text: [{ type: 'text', text: { content: '💡 What that shows:' } }],
+      },
+    });
+
+    contentBlocks.push({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: structuredContent.whatThatShows } }],
+      },
+    });
 
     // Add summary if available
     if (summary) {
       contentBlocks.push({
         object: 'block',
-        type: 'heading_2',
-        heading_2: {
-          rich_text: [{ type: 'text', text: { content: 'Summary' } }],
+        type: 'heading_3',
+        heading_3: {
+          rich_text: [{ type: 'text', text: { content: '✨ Summary:' } }],
         },
       });
 
@@ -98,23 +127,6 @@ Deno.serve(async (req) => {
         },
       });
     }
-
-    // Add transcript
-    contentBlocks.push({
-      object: 'block',
-      type: 'heading_2',
-      heading_2: {
-        rich_text: [{ type: 'text', text: { content: 'Transcript' } }],
-      },
-    });
-
-    contentBlocks.push({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [{ type: 'text', text: { content: transcript } }],
-      },
-    });
 
     // Determine parent
     let parent;

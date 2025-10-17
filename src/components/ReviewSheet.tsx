@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Database, X } from "lucide-react";
+import { Loader2, Database, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,50 +11,43 @@ import { supabase } from "@/integrations/supabase/client";
 interface ReviewSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  transcript: string;
+  stepAnswers: string[];
+  prompts: string[];
   duration: number;
   onSaved: () => void;
 }
 
 const CHILDREN = ["Hana", "Sena"];
-const TAGS = ["creativity", "curiosity", "language", "music", "motor skills", "social", "math"];
-const SENTIMENTS = [
-  { value: "very positive", label: "😊 Very Positive", color: "bg-success" },
-  { value: "positive", label: "🙂 Positive", color: "bg-success/70" },
-  { value: "neutral", label: "😐 Neutral", color: "bg-muted" },
-  { value: "negative", label: "😕 Negative", color: "bg-destructive/70" },
-];
 
 const ReviewSheet = ({
   open,
   onOpenChange,
-  transcript,
+  stepAnswers,
+  prompts,
   duration,
   onSaved,
 }: ReviewSheetProps) => {
-  const [editedTranscript, setEditedTranscript] = useState("");
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sentiment, setSentiment] = useState("positive");
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
-  // Update transcript when prop changes and generate summary
+  // Generate summary when sheet opens
   useEffect(() => {
-    if (transcript) {
-      setEditedTranscript(transcript);
-      generateSummary(transcript);
+    if (open && stepAnswers.every(a => a)) {
+      generateSummary();
     }
-  }, [transcript]);
+  }, [open, stepAnswers]);
 
-  const generateSummary = async (text: string) => {
-    if (!text || text.length < 10) return;
-    
+  const generateSummary = async () => {
     setIsGeneratingSummary(true);
     try {
+      const combinedText = stepAnswers.map((answer, i) => 
+        `${prompts[i]}: ${answer}`
+      ).join('\n\n');
+
       const { data, error } = await supabase.functions.invoke('generate-summary', {
-        body: { transcript: text },
+        body: { transcript: combinedText },
       });
 
       if (error) throw error;
@@ -77,32 +69,7 @@ const ReviewSheet = ({
     );
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
-  };
-
-  const saveLocally = async () => {
-    setIsSaving(true);
-    try {
-      // Save to IndexedDB (to be implemented)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      toast.success("Saved locally! Will sync when Lovable Cloud is connected.");
-      onSaved();
-    } catch (error) {
-      toast.error("Failed to save locally");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const saveToNotion = async () => {
-    if (selectedChildren.length === 0) {
-      toast.error("Please select at least one child");
-      return;
-    }
-    
     setIsSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -112,14 +79,18 @@ const ReviewSheet = ({
         return;
       }
 
+      const structuredContent = {
+        whatHappened: stepAnswers[0],
+        howTheyBehaved: stepAnswers[1],
+        whatThatShows: stepAnswers[2]
+      };
+
       const { data, error } = await supabase.functions.invoke('save-to-notion', {
         body: {
-          transcript: editedTranscript,
-          summary: summary,
-          children: selectedChildren,
-          tags: selectedTags,
-          sentiment: sentiment,
-          duration: duration,
+          structuredContent,
+          summary,
+          children: selectedChildren.length > 0 ? selectedChildren : undefined,
+          duration,
         },
       });
 
@@ -136,6 +107,7 @@ const ReviewSheet = ({
       });
       
       onSaved();
+      onOpenChange(false);
     } catch (error) {
       console.error('Error saving to Notion:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save to Notion';
@@ -151,14 +123,38 @@ const ReviewSheet = ({
         <SheetHeader>
           <SheetTitle>Review & Save</SheetTitle>
           <SheetDescription>
-            Edit the transcript and add details before saving
+            Review your reflection and save to Notion
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
+          {/* Structured Content Preview */}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-primary font-semibold">📝 What happened:</Label>
+              <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
+                {stepAnswers[0]}
+              </p>
+            </div>
+            
+            <div>
+              <Label className="text-primary font-semibold">👶 How they behaved:</Label>
+              <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
+                {stepAnswers[1]}
+              </p>
+            </div>
+            
+            <div>
+              <Label className="text-primary font-semibold">💡 What that shows:</Label>
+              <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
+                {stepAnswers[2]}
+              </p>
+            </div>
+          </div>
+
           {/* Summary */}
           <div className="space-y-2">
-            <Label htmlFor="summary">AI Summary</Label>
+            <Label className="text-primary font-semibold">✨ Summary</Label>
             {isGeneratingSummary ? (
               <div className="flex items-center gap-2 p-4 border rounded-lg">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -171,21 +167,9 @@ const ReviewSheet = ({
             ) : null}
           </div>
 
-          {/* Transcript */}
-          <div className="space-y-2">
-            <Label htmlFor="transcript">Transcript</Label>
-            <Textarea
-              id="transcript"
-              value={editedTranscript}
-              onChange={(e) => setEditedTranscript(e.target.value)}
-              placeholder="Your speech will appear here..."
-              className="min-h-32"
-            />
-          </div>
-
-          {/* Children Selection */}
+          {/* Children Selection (Optional) */}
           <div className="space-y-3">
-            <Label>Children</Label>
+            <Label>Children (Optional)</Label>
             <div className="flex flex-wrap gap-2">
               {CHILDREN.map((child) => (
                 <Badge
@@ -203,46 +187,6 @@ const ReviewSheet = ({
             </div>
           </div>
 
-          {/* Tags */}
-          <div className="space-y-3">
-            <Label>Tags</Label>
-            <div className="flex flex-wrap gap-2">
-              {TAGS.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant={selectedTags.includes(tag) ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer transition-all",
-                    selectedTags.includes(tag) && "bg-accent"
-                  )}
-                  onClick={() => toggleTag(tag)}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Sentiment */}
-          <div className="space-y-3">
-            <Label>Mood</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {SENTIMENTS.map((s) => (
-                <Button
-                  key={s.value}
-                  variant={sentiment === s.value ? "default" : "outline"}
-                  className={cn(
-                    "justify-start",
-                    sentiment === s.value && s.color
-                  )}
-                  onClick={() => setSentiment(s.value)}
-                >
-                  {s.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
           {/* Action Buttons */}
           <div className="flex flex-col gap-3 pt-4 border-t">
             <Button
@@ -254,7 +198,7 @@ const ReviewSheet = ({
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Saving to Notion...
                 </>
               ) : (
                 <>
@@ -265,24 +209,13 @@ const ReviewSheet = ({
             </Button>
 
             <Button
-              size="lg"
-              variant="secondary"
-              onClick={saveLocally}
-              disabled={isSaving}
-              className="w-full"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Locally
-            </Button>
-
-            <Button
               variant="ghost"
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
               className="w-full"
             >
               <X className="mr-2 h-4 w-4" />
-              Discard
+              Cancel
             </Button>
           </div>
         </div>
