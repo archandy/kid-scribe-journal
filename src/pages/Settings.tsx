@@ -73,17 +73,26 @@ export default function Settings() {
       // Get user session token
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        toast({
+          title: "Session error",
+          description: "Please refresh the page and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Detect mobile and use redirect with state parameter instead of popup
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      let authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      // Pass auth token in state for both mobile and desktop
+      let authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(session.access_token)}`;
       
-      if (isMobile && session?.access_token) {
-        // Pass auth token in state for mobile flow
-        authUrl += `&state=${encodeURIComponent(session.access_token)}`;
+      if (isMobile) {
+        // Mobile: redirect directly
         window.location.href = authUrl;
       } else {
-        // Open in popup on desktop
+        // Desktop: open in popup
         const width = 600;
         const height = 700;
         const left = window.screen.width / 2 - width / 2;
