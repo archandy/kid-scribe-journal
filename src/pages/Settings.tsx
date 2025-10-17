@@ -212,23 +212,33 @@ export default function Settings() {
             </Button>
             <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
           </div>
-        <LanguageSelector />
-
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">{t('settings.manageChildren')}</h2>
-          <Button
-            onClick={() => navigate("/children")}
-            variant="outline"
-            className="w-full"
-          >
-            <Users className="mr-2 h-4 w-4" />
-            {t('settings.manageChildren')}
-          </Button>
-        </Card>
+          <LanguageSelector />
         </div>
 
         <div className="space-y-4">
-          <Card className="border-border/50 shadow-elegant bg-card/50 backdrop-blur">
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {t('settings.manageChildren')}
+              </CardTitle>
+              <CardDescription>
+                Add and manage your children's profiles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => navigate("/children")}
+                variant="outline"
+                className="w-full"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                {t('settings.manageChildren')}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LinkIcon className="h-5 w-5" />
@@ -298,7 +308,7 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-elegant bg-card/50 backdrop-blur">
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
             <CardHeader>
               <CardTitle>{t('settings.account')}</CardTitle>
             </CardHeader>

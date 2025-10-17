@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Loader2, Database, X } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +30,7 @@ const ReviewSheet = ({
   onSaved,
 }: ReviewSheetProps) => {
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
-  const [children, setChildren] = useState<Array<{ id: string; name: string }>>([]);
+  const [children, setChildren] = useState<Array<{ id: string; name: string; photo_url?: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
@@ -41,7 +42,7 @@ const ReviewSheet = ({
       try {
         const { data, error } = await supabase
           .from("children")
-          .select("id, name")
+          .select("id, name, photo_url")
           .order("name");
 
         if (error) throw error;
@@ -204,11 +205,18 @@ const ReviewSheet = ({
                     key={child.id}
                     variant={selectedChildren.includes(child.name) ? "default" : "outline"}
                     className={cn(
-                      "cursor-pointer transition-all",
+                      "cursor-pointer transition-all flex items-center gap-2 py-2 px-3",
                       selectedChildren.includes(child.name) && "bg-primary"
                     )}
                     onClick={() => toggleChild(child.name)}
                   >
+                    <Avatar className="h-6 w-6">
+                      {child.photo_url ? (
+                        <AvatarImage src={child.photo_url} alt={child.name} />
+                      ) : (
+                        <AvatarFallback className="text-xs">👶</AvatarFallback>
+                      )}
+                    </Avatar>
                     {child.name}
                   </Badge>
                 ))}

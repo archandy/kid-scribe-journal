@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ interface Child {
   name: string;
   birthdate: string;
   photo_emoji?: string;
+  photo_url?: string;
 }
 
 const Children = () => {
@@ -73,7 +75,7 @@ const Children = () => {
     return age;
   };
 
-  const handleSubmit = async (data: { name: string; birthdate: Date; photo_emoji?: string; id?: string }) => {
+  const handleSubmit = async (data: { name: string; birthdate: Date; photo_url?: string; id?: string }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -85,7 +87,7 @@ const Children = () => {
       const childData = {
         name: data.name,
         birthdate: data.birthdate.toISOString().split('T')[0],
-        photo_emoji: data.photo_emoji || "👶",
+        photo_url: data.photo_url || null,
         user_id: session.user.id,
       };
 
@@ -179,7 +181,13 @@ const Children = () => {
             {children.map((child) => (
               <Card key={child.id} className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="text-5xl">{child.photo_emoji || "👶"}</div>
+                  <Avatar className="h-16 w-16">
+                    {child.photo_url ? (
+                      <AvatarImage src={child.photo_url} alt={child.name} />
+                    ) : (
+                      <AvatarFallback className="text-3xl">👶</AvatarFallback>
+                    )}
+                  </Avatar>
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold">{child.name}</h3>
                     <p className="text-muted-foreground">
