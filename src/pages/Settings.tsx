@@ -240,12 +240,12 @@ export default function Settings() {
             {isConnected && (
               <div className="space-y-3">
                 <Label htmlFor="database-id">
-                  Notion Database ID
+                  Parent Page ID (Optional)
                 </Label>
                 <div className="flex gap-2">
                   <Input
                     id="database-id"
-                    placeholder="e.g., 1234567890abcdef..."
+                    placeholder="Leave empty to create in workspace root"
                     value={databaseId}
                     onChange={(e) => setDatabaseId(e.target.value)}
                   />
@@ -254,7 +254,7 @@ export default function Settings() {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Find this in your Notion database URL or share menu
+                  Optional: Provide a Notion page ID to create journal entries as sub-pages. Leave empty to create pages in your workspace root.
                 </p>
               </div>
             )}

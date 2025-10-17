@@ -39,9 +39,8 @@ Deno.serve(async (req) => {
       throw new Error('No Notion connection found. Please connect to Notion first.');
     }
 
-    if (!tokenData.database_id) {
-      throw new Error('No database ID configured. Please set your database ID in Settings.');
-    }
+    // database_id is now optional - if not provided, create page in workspace root
+    const parentPageId = tokenData.database_id;
 
     // Get note data from request
     const { transcript, audioUrl, children, tags, sentiment, duration, location } = await req.json();
@@ -52,35 +51,76 @@ Deno.serve(async (req) => {
 
     // Extract title from transcript (first 60 chars)
     const title = transcript.substring(0, 60) + (transcript.length > 60 ? '...' : '');
+    const date = new Date().toISOString();
 
-    // Format database ID correctly (Notion expects UUID format with hyphens)
-    let formattedDatabaseId = tokenData.database_id.replace(/-/g, ''); // Remove any existing hyphens first
+    console.log('Creating Notion page with title:', title);
+
+    // Build page content blocks
+    const contentBlocks = [];
     
-    // Add hyphens in UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    if (formattedDatabaseId.length === 32) {
-      formattedDatabaseId = `${formattedDatabaseId.slice(0, 8)}-${formattedDatabaseId.slice(8, 12)}-${formattedDatabaseId.slice(12, 16)}-${formattedDatabaseId.slice(16, 20)}-${formattedDatabaseId.slice(20)}`;
+    // Add metadata section
+    const metadata = [];
+    if (children && children.length > 0) metadata.push(`👶 Children: ${children.join(', ')}`);
+    if (tags && tags.length > 0) metadata.push(`🏷️ Tags: ${tags.join(', ')}`);
+    if (sentiment) metadata.push(`😊 Sentiment: ${sentiment}`);
+    if (duration) metadata.push(`⏱️ Duration: ${Math.round(duration)}s`);
+    if (location) metadata.push(`📍 Location: ${location}`);
+    metadata.push(`📱 Source: mobile PWA`);
+    metadata.push(`📅 Date: ${new Date(date).toLocaleString()}`);
+    
+    if (metadata.length > 0) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'callout',
+        callout: {
+          rich_text: [{ type: 'text', text: { content: metadata.join('\n') } }],
+          icon: { emoji: '📝' },
+          color: 'blue_background',
+        },
+      });
     }
-    
-    console.log('Using database ID:', formattedDatabaseId);
-    console.log('Access token length:', tokenData.access_token.length);
 
-    // Test: Try to retrieve the database to verify access
-    console.log('Testing database access...');
-    const testResponse = await fetch(`https://api.notion.com/v1/databases/${formattedDatabaseId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-        'Notion-Version': '2022-06-28',
+    // Add transcript
+    contentBlocks.push({
+      object: 'block',
+      type: 'heading_2',
+      heading_2: {
+        rich_text: [{ type: 'text', text: { content: 'Transcript' } }],
       },
     });
 
-    if (!testResponse.ok) {
-      const testError = await testResponse.text();
-      console.error('Database access test failed:', testResponse.status, testError);
-      throw new Error(`Cannot access database. Please ensure: 1) The database ID is correct, 2) Your Notion integration has been added to this database via "..." → "Connections". Error: ${testError}`);
+    contentBlocks.push({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: transcript } }],
+      },
+    });
+
+    // Add audio URL if available
+    if (audioUrl) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'bookmark',
+        bookmark: {
+          url: audioUrl,
+        },
+      });
     }
 
-    console.log('Database access verified successfully');
+    // Determine parent
+    let parent;
+    if (parentPageId) {
+      // Format page ID if provided
+      let formattedPageId = parentPageId.replace(/-/g, '');
+      if (formattedPageId.length === 32) {
+        formattedPageId = `${formattedPageId.slice(0, 8)}-${formattedPageId.slice(8, 12)}-${formattedPageId.slice(12, 16)}-${formattedPageId.slice(16, 20)}-${formattedPageId.slice(20)}`;
+      }
+      parent = { page_id: formattedPageId };
+    } else {
+      // Create in workspace root
+      parent = { type: 'workspace', workspace: true };
+    }
 
     // Create Notion page
     const notionResponse = await fetch('https://api.notion.com/v1/pages', {
@@ -91,51 +131,13 @@ Deno.serve(async (req) => {
         'Notion-Version': '2022-06-28',
       },
       body: JSON.stringify({
-        parent: { database_id: formattedDatabaseId },
+        parent,
         properties: {
-          'Title': {
+          title: {
             title: [{ text: { content: title } }],
           },
-          'Date': {
-            date: { start: new Date().toISOString() },
-          },
-          'Transcript': {
-            rich_text: [{ text: { content: transcript } }],
-          },
-          ...(audioUrl && {
-            'Audio URL': {
-              url: audioUrl,
-            },
-          }),
-          ...(children && children.length > 0 && {
-            'Children': {
-              multi_select: children.map((c: string) => ({ name: c })),
-            },
-          }),
-          ...(tags && tags.length > 0 && {
-            'Tags': {
-              multi_select: tags.map((t: string) => ({ name: t })),
-            },
-          }),
-          ...(sentiment && {
-            'Sentiment': {
-              select: { name: sentiment },
-            },
-          }),
-          ...(duration && {
-            'Duration (s)': {
-              number: Math.round(duration),
-            },
-          }),
-          ...(location && {
-            'Location': {
-              rich_text: [{ text: { content: location } }],
-            },
-          }),
-          'Source': {
-            select: { name: 'mobile PWA' },
-          },
         },
+        children: contentBlocks,
       }),
     });
 
