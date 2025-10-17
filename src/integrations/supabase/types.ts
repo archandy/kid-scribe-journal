@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      notion_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          database_id: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          workspace_id: string | null
+          workspace_name: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          database_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          database_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
