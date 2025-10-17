@@ -18,7 +18,7 @@ interface ReviewSheetProps {
   onSaved: () => void;
 }
 
-const CHILDREN = ["Hana", "Sena"];
+
 
 const ReviewSheet = ({
   open,
@@ -29,10 +29,32 @@ const ReviewSheet = ({
   onSaved,
 }: ReviewSheetProps) => {
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
+  const [children, setChildren] = useState<Array<{ id: string; name: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { t, language } = useLanguage();
+
+  // Fetch children from database
+  useEffect(() => {
+    const fetchChildren = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("children")
+          .select("id, name")
+          .order("name");
+
+        if (error) throw error;
+        setChildren(data || []);
+      } catch (error) {
+        console.error("Error fetching children:", error);
+      }
+    };
+
+    if (open) {
+      fetchChildren();
+    }
+  }, [open]);
 
   // Generate summary when sheet opens
   useEffect(() => {
@@ -173,24 +195,26 @@ const ReviewSheet = ({
           </div>
 
           {/* Children Selection (Optional) */}
-          <div className="space-y-3">
-            <Label>{t('review.children')}</Label>
-            <div className="flex flex-wrap gap-2">
-              {CHILDREN.map((child) => (
-                <Badge
-                  key={child}
-                  variant={selectedChildren.includes(child) ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer transition-all",
-                    selectedChildren.includes(child) && "bg-primary"
-                  )}
-                  onClick={() => toggleChild(child)}
-                >
-                  {child}
-                </Badge>
-              ))}
+          {children.length > 0 && (
+            <div className="space-y-3">
+              <Label>{t('review.children')}</Label>
+              <div className="flex flex-wrap gap-2">
+                {children.map((child) => (
+                  <Badge
+                    key={child.id}
+                    variant={selectedChildren.includes(child.name) ? "default" : "outline"}
+                    className={cn(
+                      "cursor-pointer transition-all",
+                      selectedChildren.includes(child.name) && "bg-primary"
+                    )}
+                    onClick={() => toggleChild(child.name)}
+                  >
+                    {child.name}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-3 pt-4 border-t">

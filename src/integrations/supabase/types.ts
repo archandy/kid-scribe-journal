@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      children: {
+        Row: {
+          birthdate: string
+          created_at: string
+          id: string
+          name: string
+          photo_emoji: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birthdate: string
+          created_at?: string
+          id?: string
+          name: string
+          photo_emoji?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birthdate?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_emoji?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notion_tokens: {
         Row: {
           access_token: string

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut } from "lucide-react";
+import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -212,7 +212,19 @@ export default function Settings() {
             </Button>
             <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
           </div>
-          <LanguageSelector />
+        <LanguageSelector />
+
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">{t('settings.manageChildren')}</h2>
+          <Button
+            onClick={() => navigate("/children")}
+            variant="outline"
+            className="w-full"
+          >
+            <Users className="mr-2 h-4 w-4" />
+            {t('settings.manageChildren')}
+          </Button>
+        </Card>
         </div>
 
         <div className="space-y-4">
