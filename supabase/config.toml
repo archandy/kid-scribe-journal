@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.save-to-notion]
 verify_jwt = true
+
+[functions.generate-summary]
+verify_jwt = true

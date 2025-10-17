@@ -44,13 +44,38 @@ const ReviewSheet = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sentiment, setSentiment] = useState("positive");
   const [isSaving, setIsSaving] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
-  // Update transcript when prop changes
+  // Update transcript when prop changes and generate summary
   useEffect(() => {
     if (transcript) {
       setEditedTranscript(transcript);
+      generateSummary(transcript);
     }
   }, [transcript]);
+
+  const generateSummary = async (text: string) => {
+    if (!text || text.length < 10) return;
+    
+    setIsGeneratingSummary(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-summary', {
+        body: { transcript: text },
+      });
+
+      if (error) throw error;
+      
+      if (data?.summary) {
+        setSummary(data.summary);
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast.error("Failed to generate summary");
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
 
   const toggleChild = (child: string) => {
     setSelectedChildren(prev =>
@@ -96,6 +121,7 @@ const ReviewSheet = ({
       const { data, error } = await supabase.functions.invoke('save-to-notion', {
         body: {
           transcript: editedTranscript,
+          summary: summary,
           audioUrl: audioUrl,
           children: selectedChildren,
           tags: selectedTags,
@@ -144,6 +170,21 @@ const ReviewSheet = ({
               <audio controls src={audioUrl} className="w-full" />
             </div>
           )}
+
+          {/* Summary */}
+          <div className="space-y-2">
+            <Label htmlFor="summary">AI Summary</Label>
+            {isGeneratingSummary ? (
+              <div className="flex items-center gap-2 p-4 border rounded-lg">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Generating summary...</span>
+              </div>
+            ) : summary ? (
+              <div className="p-4 border rounded-lg bg-muted/50">
+                <p className="text-sm">{summary}</p>
+              </div>
+            ) : null}
+          </div>
 
           {/* Transcript */}
           <div className="space-y-2">

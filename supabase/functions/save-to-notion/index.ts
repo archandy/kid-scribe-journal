@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const parentPageId = tokenData.database_id;
 
     // Get note data from request
-    const { transcript, audioUrl, children, tags, sentiment, duration, location } = await req.json();
+    const { transcript, summary, audioUrl, children, tags, sentiment, duration, location } = await req.json();
 
     if (!transcript) {
       throw new Error('Transcript is required');
@@ -76,6 +76,25 @@ Deno.serve(async (req) => {
           rich_text: [{ type: 'text', text: { content: metadata.join('\n') } }],
           icon: { emoji: '📝' },
           color: 'blue_background',
+        },
+      });
+    }
+
+    // Add summary if available
+    if (summary) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'heading_2',
+        heading_2: {
+          rich_text: [{ type: 'text', text: { content: 'Summary' } }],
+        },
+      });
+
+      contentBlocks.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [{ type: 'text', text: { content: summary } }],
         },
       });
     }
