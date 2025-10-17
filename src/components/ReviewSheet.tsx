@@ -32,7 +32,7 @@ const ReviewSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Generate summary when sheet opens
   useEffect(() => {
@@ -49,7 +49,10 @@ const ReviewSheet = ({
       ).join('\n\n');
 
       const { data, error } = await supabase.functions.invoke('generate-summary', {
-        body: { transcript: combinedText },
+        body: { 
+          transcript: combinedText,
+          language: language 
+        }
       });
 
       if (error) throw error;

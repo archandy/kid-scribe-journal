@@ -60,6 +60,24 @@ Deno.serve(async (req) => {
     // Build page content blocks
     const contentBlocks = [];
 
+    // Add metadata callout at the top if there's any metadata
+    const metadata = [];
+    metadata.push(`📅 Date: ${date.toLocaleString()}`);
+    if (children && children.length > 0) metadata.push(`👶 Children: ${children.join(', ')}`);
+    if (duration) metadata.push(`⏱️ Duration: ${Math.round(duration)}s`);
+    
+    if (metadata.length > 0) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'callout',
+        callout: {
+          rich_text: [{ type: 'text', text: { content: metadata.join('\n') } }],
+          icon: { emoji: '📝' },
+          color: 'blue_background',
+        },
+      });
+    }
+
     // Add structured content
     contentBlocks.push({
       object: 'block',

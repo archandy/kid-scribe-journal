@@ -6,13 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const getLanguageInstruction = (language: string) => {
+  const instructions: Record<string, string> = {
+    'en': 'Generate a concise summary in English.',
+    'ja': '日本語で簡潔な要約を生成してください。',
+    'ko': '한국어로 간결한 요약을 생성하세요.'
+  };
+  return instructions[language] || instructions['en'];
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { transcript } = await req.json();
+    const { transcript, language = 'en' } = await req.json();
 
     if (!transcript) {
       throw new Error('Transcript is required');
@@ -24,6 +33,9 @@ serve(async (req) => {
     }
 
     console.log('Generating summary for transcript...');
+    console.log('Language:', language);
+
+    const languageInstruction = getLanguageInstruction(language);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -36,11 +48,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that creates concise summaries of voice recordings. Focus on key points and main themes. Keep summaries brief but informative.'
+            content: `You are a helpful assistant that creates concise summaries of parent journal entries about their children. ${languageInstruction} Keep summaries brief and focus on key insights about child development and behavior.`
           },
           {
             role: 'user',
-            content: `Please provide a brief summary of this transcript:\n\n${transcript}`
+            content: `Please summarize this journal entry:\n\n${transcript}`
           }
         ],
       }),
