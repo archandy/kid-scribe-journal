@@ -53,9 +53,15 @@ Deno.serve(async (req) => {
     // Extract title from transcript (first 60 chars)
     const title = transcript.substring(0, 60) + (transcript.length > 60 ? '...' : '');
 
-    // Clean database ID (remove hyphens if present)
-    const cleanDatabaseId = tokenData.database_id.replace(/-/g, '');
-    console.log('Using database ID:', cleanDatabaseId);
+    // Format database ID correctly (Notion expects UUID format with hyphens)
+    let formattedDatabaseId = tokenData.database_id.replace(/-/g, ''); // Remove any existing hyphens first
+    
+    // Add hyphens in UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    if (formattedDatabaseId.length === 32) {
+      formattedDatabaseId = `${formattedDatabaseId.slice(0, 8)}-${formattedDatabaseId.slice(8, 12)}-${formattedDatabaseId.slice(12, 16)}-${formattedDatabaseId.slice(16, 20)}-${formattedDatabaseId.slice(20)}`;
+    }
+    
+    console.log('Using database ID:', formattedDatabaseId);
     console.log('Access token length:', tokenData.access_token.length);
 
     // Create Notion page
@@ -67,7 +73,7 @@ Deno.serve(async (req) => {
         'Notion-Version': '2022-06-28',
       },
       body: JSON.stringify({
-        parent: { database_id: cleanDatabaseId },
+        parent: { database_id: formattedDatabaseId },
         properties: {
           'Title': {
             title: [{ text: { content: title } }],
