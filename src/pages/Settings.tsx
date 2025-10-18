@@ -9,6 +9,14 @@ import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users } fro
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import { z } from "zod";
+
+// Validation schema for Notion database ID
+const databaseIdSchema = z.string()
+  .trim()
+  .min(32, "Database ID must be at least 32 characters")
+  .max(36, "Database ID must be less than 36 characters")
+  .regex(/^[a-f0-9-]+$/, "Invalid database ID format");
 
 export default function Settings() {
   const [databaseId, setDatabaseId] = useState("");
@@ -118,13 +126,34 @@ export default function Settings() {
   };
 
   const saveDatabaseId = async () => {
+    if (!databaseId.trim()) {
+      toast({
+        title: "Validation error",
+        description: "Please enter a database ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate database ID format
+    const validationResult = databaseIdSchema.safeParse(databaseId);
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.errors[0]?.message || "Invalid database ID";
+      toast({
+        title: "Validation error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase
         .from('notion_tokens')
-        .update({ database_id: databaseId })
+        .update({ database_id: validationResult.data })
         .eq('user_id', user.id);
 
       if (error) throw error;

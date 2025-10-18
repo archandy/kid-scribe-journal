@@ -4,6 +4,25 @@ import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { z } from "zod";
+
+// Server-side validation schema
+const childSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  birthdate: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+    .refine(d => {
+      const date = new Date(d);
+      return date <= new Date();
+    }, "Birthdate cannot be in the future")
+    .refine(d => {
+      const date = new Date(d);
+      return date.getFullYear() >= 1900;
+    }, "Invalid birthdate year"),
+  photo_url: z.string().optional()
+    .refine(url => !url || url.length === 0 || url.includes('supabase.co/storage'), "Invalid photo URL"),
+  user_id: z.string().uuid(),
+});
 import {
   Dialog,
   DialogContent,
@@ -81,6 +100,20 @@ const Children = () => {
       
       if (!session) {
         toast.error(t('children.authError'));
+        return;
+      }
+
+      // Server-side validation
+      const validationResult = childSchema.safeParse({
+        name: data.name,
+        birthdate: data.birthdate,
+        photo_url: data.photo_url || "",
+        user_id: session.user.id,
+      });
+
+      if (!validationResult.success) {
+        const errorMessage = validationResult.error.errors[0]?.message || "Invalid input";
+        toast.error(errorMessage);
         return;
       }
 
