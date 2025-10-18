@@ -135,13 +135,17 @@ const Record = () => {
           const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcriptPiece + ' ';
+            console.log('Final transcript piece:', transcriptPiece);
           } else {
             interimTranscript += transcriptPiece;
+            console.log('Interim transcript piece:', transcriptPiece);
           }
         }
 
         lastInterimTranscript = interimTranscript;
-        setCurrentTranscript(finalTranscript + interimTranscript);
+        const currentText = finalTranscript + interimTranscript;
+        console.log('Current combined transcript:', currentText);
+        setCurrentTranscript(currentText);
       };
 
       recognition.onerror = (event: any) => {
@@ -156,6 +160,12 @@ const Record = () => {
       };
 
       recognition.onend = () => {
+        console.log('Recognition ended - Final:', finalTranscript, 'Interim:', lastInterimTranscript);
+        
+        // Capture complete transcript including interim results
+        const completeTranscript = (finalTranscript + lastInterimTranscript).trim();
+        console.log('Complete transcript:', completeTranscript);
+        
         // Clean up microphone stream and audio context
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
@@ -168,9 +178,6 @@ const Record = () => {
         
         // Clear recognition reference to allow fresh start
         recognitionRef.current = null;
-        
-        // Capture complete transcript including interim results
-        const completeTranscript = (finalTranscript + lastInterimTranscript).trim();
         
         if (completeTranscript) {
           setCurrentTranscript(completeTranscript);
@@ -190,6 +197,7 @@ const Record = () => {
             setShowReview(true);
           }
         } else {
+          console.error('No transcript captured');
           toast.error("No speech was detected. Please try again.");
           setCurrentTranscript('');
         }
