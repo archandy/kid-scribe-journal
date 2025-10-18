@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -46,7 +46,21 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(initialData?.photo_url);
+  const [signedUrl, setSignedUrl] = useState<string | undefined>();
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+
+  // Generate signed URL for existing photo
+  useEffect(() => {
+    const getSignedUrl = async () => {
+      if (photoUrl && !photoUrl.startsWith('data:')) {
+        const { data } = await supabase.storage
+          .from("child-photos")
+          .createSignedUrl(photoUrl, 3600); // 1 hour expiry
+        if (data) setSignedUrl(data.signedUrl);
+      }
+    };
+    getSignedUrl();
+  }, [photoUrl]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -124,13 +138,9 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("child-photos")
-        .getPublicUrl(filePath);
-
-      setPhotoUrl(publicUrl);
-      form.setValue("photo_url", publicUrl);
+      // Store the file path instead of URL
+      setPhotoUrl(filePath);
+      form.setValue("photo_url", filePath);
       toast.success("Photo uploaded successfully");
     } catch (error) {
       console.error("Error uploading photo:", error);
@@ -214,8 +224,8 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
               <FormControl>
                 <div className="flex flex-col items-center gap-4">
                   <Avatar className="h-24 w-24">
-                    {photoUrl ? (
-                      <AvatarImage src={photoUrl} alt="Child photo" />
+                    {signedUrl ? (
+                      <AvatarImage src={signedUrl} alt="Child photo" />
                     ) : (
                       <AvatarFallback className="text-4xl">👶</AvatarFallback>
                     )}

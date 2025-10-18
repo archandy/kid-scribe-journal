@@ -51,6 +51,7 @@ interface Child {
   birthdate: string;
   photo_emoji?: string;
   photo_url?: string;
+  signedPhotoUrl?: string;
 }
 
 const Children = () => {
@@ -74,7 +75,21 @@ const Children = () => {
         .order("birthdate", { ascending: false });
 
       if (error) throw error;
-      setChildren(data || []);
+      
+      // Generate signed URLs for photos
+      const childrenWithSignedUrls = await Promise.all(
+        (data || []).map(async (child) => {
+          if (child.photo_url) {
+            const { data: signedData } = await supabase.storage
+              .from("child-photos")
+              .createSignedUrl(child.photo_url, 3600); // 1 hour expiry
+            return { ...child, signedPhotoUrl: signedData?.signedUrl };
+          }
+          return child;
+        })
+      );
+      
+      setChildren(childrenWithSignedUrls);
     } catch (error) {
       console.error("Error fetching children:", error);
       toast.error(t('children.fetchError'));
@@ -215,8 +230,8 @@ const Children = () => {
               <Card key={child.id} className="p-6">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
-                    {child.photo_url ? (
-                      <AvatarImage src={child.photo_url} alt={child.name} />
+                    {child.signedPhotoUrl ? (
+                      <AvatarImage src={child.signedPhotoUrl} alt={child.name} />
                     ) : (
                       <AvatarFallback className="text-3xl">👶</AvatarFallback>
                     )}
