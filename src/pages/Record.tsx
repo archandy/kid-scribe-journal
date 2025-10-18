@@ -42,6 +42,7 @@ const Record = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     // Check authentication
@@ -70,6 +71,11 @@ const Record = () => {
       if (recognitionRef.current) recognitionRef.current.stop();
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
     };
   }, [navigate]);
@@ -96,6 +102,7 @@ const Record = () => {
 
       // Set up audio visualization
       const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -137,10 +144,14 @@ const Record = () => {
       };
 
       recognition.onend = () => {
-        // Clean up microphone stream
+        // Clean up microphone stream and audio context
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
           streamRef.current = null;
+        }
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
         }
         
         if (finalTranscript.trim()) {
@@ -202,6 +213,18 @@ const Record = () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
+      }
+
+      // Clean up media stream immediately
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+
+      // Close audio context immediately
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
 
       toast.success("Processing your answer...");
