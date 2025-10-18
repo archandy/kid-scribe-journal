@@ -116,6 +116,7 @@ const Record = () => {
       recognition.lang = getLanguageCode();
 
       let finalTranscript = '';
+      let lastInterimTranscript = '';
 
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
@@ -129,6 +130,7 @@ const Record = () => {
           }
         }
 
+        lastInterimTranscript = interimTranscript;
         setCurrentTranscript(finalTranscript + interimTranscript);
       };
 
@@ -154,13 +156,15 @@ const Record = () => {
           audioContextRef.current = null;
         }
         
-        if (finalTranscript.trim()) {
-          const trimmedTranscript = finalTranscript.trim();
-          setCurrentTranscript(trimmedTranscript);
+        // Capture complete transcript including interim results
+        const completeTranscript = (finalTranscript + lastInterimTranscript).trim();
+        
+        if (completeTranscript) {
+          setCurrentTranscript(completeTranscript);
           
           // Save answer for current step
           const newAnswers = [...stepAnswers];
-          newAnswers[currentStep] = trimmedTranscript;
+          newAnswers[currentStep] = completeTranscript;
           setStepAnswers(newAnswers);
           
           // Move to next step or show review
