@@ -81,10 +81,18 @@ const Record = () => {
   }, [navigate]);
 
   const startRecording = async () => {
+    console.log('=== START RECORDING CALLED ===');
+    console.log('Current step:', currentStep);
+    console.log('Is recording:', isRecording);
+    console.log('Recognition ref exists:', !!recognitionRef.current);
+    console.log('Stream ref exists:', !!streamRef.current);
+    console.log('Audio context ref exists:', !!audioContextRef.current);
+    
     try {
       // Clean up any existing recognition first
       if (recognitionRef.current) {
         try {
+          console.log('Stopping existing recognition');
           recognitionRef.current.stop();
           recognitionRef.current = null;
         } catch (e) {
@@ -94,16 +102,20 @@ const Record = () => {
 
       // Clean up any existing streams/contexts before starting new recording
       if (streamRef.current) {
+        console.log('Cleaning up existing stream');
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
       if (audioContextRef.current) {
+        console.log('Closing existing audio context');
         await audioContextRef.current.close();
         audioContextRef.current = null;
       }
 
       // Wait for cleanup to complete on mobile
+      console.log('Waiting for cleanup...');
       await new Promise(resolve => setTimeout(resolve, 300));
+      console.log('Cleanup complete');
 
       // Check for Web Speech API support
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -114,6 +126,7 @@ const Record = () => {
       }
 
       // Get microphone for visualization
+      console.log('Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -121,6 +134,7 @@ const Record = () => {
           autoGainControl: true
         } 
       });
+      console.log('Microphone access granted');
       streamRef.current = stream;
 
       // Set up audio visualization
@@ -144,6 +158,10 @@ const Record = () => {
       let finalTranscript = '';
       let lastInterimTranscript = '';
 
+      recognition.onstart = () => {
+        console.log('=== RECOGNITION STARTED ===');
+      };
+
       recognition.onresult = (event: any) => {
         let interimTranscript = '';
 
@@ -165,7 +183,9 @@ const Record = () => {
       };
 
       recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('=== SPEECH RECOGNITION ERROR ===');
+        console.error('Error type:', event.error);
+        console.error('Error message:', event.message);
         if (event.error === 'no-speech') {
           toast.error("No speech detected. Please try speaking.");
         } else if (event.error === 'not-allowed') {
@@ -178,6 +198,7 @@ const Record = () => {
       };
 
       recognition.onend = () => {
+        console.log('=== RECOGNITION ENDED ===');
         console.log('Recognition ended - Final:', finalTranscript, 'Interim:', lastInterimTranscript);
         
         // Capture complete transcript including interim results FIRST
@@ -196,6 +217,7 @@ const Record = () => {
         
         // NOW clean up audio resources after capturing transcript
         setTimeout(() => {
+          console.log('Cleaning up audio resources...');
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
@@ -207,15 +229,18 @@ const Record = () => {
           
           // Clear recognition reference to allow fresh start
           recognitionRef.current = null;
+          console.log('Cleanup complete');
           
           // Move to next step or show review after cleanup
           if (completeTranscript) {
             if (currentStep < 2) {
+              console.log('Moving to next step...');
               setTimeout(() => {
                 setCurrentStep(currentStep + 1);
                 setCurrentTranscript("");
               }, 500);
             } else {
+              console.log('Showing review...');
               setShowReview(true);
             }
           } else {
