@@ -81,54 +81,60 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Add structured content
-    contentBlocks.push({
-      object: 'block',
-      type: 'heading_3',
-      heading_3: {
-        rich_text: [{ type: 'text', text: { content: '📝 What happened:' } }],
-      },
-    });
+    // Add structured content - only if fields have content
+    if (structuredContent.whatHappened) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'heading_3',
+        heading_3: {
+          rich_text: [{ type: 'text', text: { content: '📝 What happened:' } }],
+        },
+      });
 
-    contentBlocks.push({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [{ type: 'text', text: { content: structuredContent.whatHappened } }],
-      },
-    });
+      contentBlocks.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [{ type: 'text', text: { content: structuredContent.whatHappened } }],
+        },
+      });
+    }
 
-    contentBlocks.push({
-      object: 'block',
-      type: 'heading_3',
-      heading_3: {
-        rich_text: [{ type: 'text', text: { content: '👶 How they behaved:' } }],
-      },
-    });
+    if (structuredContent.howTheyBehaved) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'heading_3',
+        heading_3: {
+          rich_text: [{ type: 'text', text: { content: '👶 How they behaved:' } }],
+        },
+      });
 
-    contentBlocks.push({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [{ type: 'text', text: { content: structuredContent.howTheyBehaved } }],
-      },
-    });
+      contentBlocks.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [{ type: 'text', text: { content: structuredContent.howTheyBehaved } }],
+        },
+      });
+    }
 
-    contentBlocks.push({
-      object: 'block',
-      type: 'heading_3',
-      heading_3: {
-        rich_text: [{ type: 'text', text: { content: '💡 What that shows:' } }],
-      },
-    });
+    if (structuredContent.whatThatShows) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'heading_3',
+        heading_3: {
+          rich_text: [{ type: 'text', text: { content: '💡 What that shows:' } }],
+        },
+      });
 
-    contentBlocks.push({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [{ type: 'text', text: { content: structuredContent.whatThatShows } }],
-      },
-    });
+      contentBlocks.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [{ type: 'text', text: { content: structuredContent.whatThatShows } }],
+        },
+      });
+    }
 
     // Add summary if available
     if (summary) {
