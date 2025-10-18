@@ -123,7 +123,10 @@ const Record = () => {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
       recognition.lang = getLanguageCode();
+      
+      console.log('Starting speech recognition with lang:', getLanguageCode());
 
       let finalTranscript = '';
       let lastInterimTranscript = '';
@@ -154,8 +157,10 @@ const Record = () => {
           toast.error("No speech detected. Please try speaking.");
         } else if (event.error === 'not-allowed') {
           toast.error("Microphone access denied. Please check permissions.");
+        } else if (event.error === 'aborted') {
+          console.log('Recognition aborted - this is normal when stopping');
         } else {
-          toast.error("Error during speech recognition.");
+          toast.error(`Error during speech recognition: ${event.error}`);
         }
       };
 
@@ -204,7 +209,18 @@ const Record = () => {
       };
 
       recognitionRef.current = recognition;
-      recognition.start();
+      
+      // Small delay to ensure mic is ready (especially important on mobile)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      try {
+        recognition.start();
+        console.log('Recognition started successfully');
+      } catch (error) {
+        console.error('Failed to start recognition:', error);
+        toast.error("Failed to start recording. Please try again.");
+        return;
+      }
       
       setIsRecording(true);
       setRecordingTime(0);
