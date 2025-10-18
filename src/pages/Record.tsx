@@ -166,6 +166,9 @@ const Record = () => {
           audioContextRef.current = null;
         }
         
+        // Clear recognition reference to allow fresh start
+        recognitionRef.current = null;
+        
         // Capture complete transcript including interim results
         const completeTranscript = (finalTranscript + lastInterimTranscript).trim();
         
@@ -216,7 +219,12 @@ const Record = () => {
 
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.log('Stop recognition error:', e);
+      }
+      
       setIsRecording(false);
       
       if (timerRef.current) {
