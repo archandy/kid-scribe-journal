@@ -180,23 +180,11 @@ const Record = () => {
       recognition.onend = () => {
         console.log('Recognition ended - Final:', finalTranscript, 'Interim:', lastInterimTranscript);
         
-        // Capture complete transcript including interim results
+        // Capture complete transcript including interim results FIRST
         const completeTranscript = (finalTranscript + lastInterimTranscript).trim();
         console.log('Complete transcript:', completeTranscript);
         
-        // Clean up microphone stream and audio context
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-        if (audioContextRef.current) {
-          audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
-        
-        // Clear recognition reference to allow fresh start
-        recognitionRef.current = null;
-        
+        // Save the transcript before any cleanup
         if (completeTranscript) {
           setCurrentTranscript(completeTranscript);
           
@@ -204,21 +192,38 @@ const Record = () => {
           const newAnswers = [...stepAnswers];
           newAnswers[currentStep] = completeTranscript;
           setStepAnswers(newAnswers);
-          
-          // Move to next step or show review - add delay for mobile cleanup
-          if (currentStep < 2) {
-            setTimeout(() => {
-              setCurrentStep(currentStep + 1);
-              setCurrentTranscript("");
-            }, 1500); // Increased delay for mobile audio cleanup
-          } else {
-            setShowReview(true);
-          }
-        } else {
-          console.error('No transcript captured');
-          toast.error("No speech was detected. Please try again.");
-          setCurrentTranscript('');
         }
+        
+        // NOW clean up audio resources after capturing transcript
+        setTimeout(() => {
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+          if (audioContextRef.current) {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+          }
+          
+          // Clear recognition reference to allow fresh start
+          recognitionRef.current = null;
+          
+          // Move to next step or show review after cleanup
+          if (completeTranscript) {
+            if (currentStep < 2) {
+              setTimeout(() => {
+                setCurrentStep(currentStep + 1);
+                setCurrentTranscript("");
+              }, 500);
+            } else {
+              setShowReview(true);
+            }
+          } else {
+            console.error('No transcript captured');
+            toast.error("No speech was detected. Please try again.");
+            setCurrentTranscript('');
+          }
+        }, 200); // Delay cleanup to ensure transcript is captured
       };
 
       recognitionRef.current = recognition;
@@ -274,17 +279,8 @@ const Record = () => {
         animationRef.current = null;
       }
 
-      // Clean up media stream immediately
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-
-      // Close audio context immediately
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
+      // Don't clean up audio resources here - let recognition.onend handle it
+      // This ensures transcript is captured before cleanup
 
       toast.success("Processing your answer...");
     }
