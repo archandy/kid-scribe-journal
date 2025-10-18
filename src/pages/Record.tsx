@@ -82,6 +82,16 @@ const Record = () => {
 
   const startRecording = async () => {
     try {
+      // Clean up any existing recognition first
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        } catch (e) {
+          console.log('Cleanup error:', e);
+        }
+      }
+
       // Check for Web Speech API support
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
