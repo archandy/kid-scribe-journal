@@ -92,6 +92,19 @@ const Record = () => {
         }
       }
 
+      // Clean up any existing streams/contexts before starting new recording
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (audioContextRef.current) {
+        await audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      // Wait for cleanup to complete on mobile
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       // Check for Web Speech API support
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
@@ -192,12 +205,12 @@ const Record = () => {
           newAnswers[currentStep] = completeTranscript;
           setStepAnswers(newAnswers);
           
-          // Move to next step or show review
+          // Move to next step or show review - add delay for mobile cleanup
           if (currentStep < 2) {
             setTimeout(() => {
               setCurrentStep(currentStep + 1);
               setCurrentTranscript("");
-            }, 1000);
+            }, 1500); // Increased delay for mobile audio cleanup
           } else {
             setShowReview(true);
           }
