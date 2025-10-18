@@ -43,6 +43,9 @@ const Record = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  // Detect mobile device
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   useEffect(() => {
     // Check authentication
     const checkAuth = async () => {
@@ -124,26 +127,36 @@ const Record = () => {
         return;
       }
 
-      // Get microphone for visualization
-      console.log('Requesting microphone access...');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      console.log('Microphone access granted');
-      streamRef.current = stream;
+      // Only set up visualization on desktop to avoid resource conflicts on mobile
+      if (!isMobile) {
+        console.log('Setting up audio visualization for desktop...');
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+        console.log('Microphone access granted for visualization');
+        streamRef.current = stream;
 
-      // Set up audio visualization
-      const audioContext = new AudioContext();
-      audioContextRef.current = audioContext;
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
+        // Set up audio visualization
+        const audioContext = new AudioContext();
+        
+        // Resume AudioContext if suspended (important for mobile compatibility)
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+        
+        audioContextRef.current = audioContext;
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+      } else {
+        console.log('Skipping visualization on mobile to avoid conflicts');
+      }
 
       // Set up speech recognition
       const recognition = new SpeechRecognition();
@@ -185,9 +198,23 @@ const Record = () => {
         console.error('=== SPEECH RECOGNITION ERROR ===');
         console.error('Error type:', event.error);
         console.error('Error message:', event.message);
+        console.error('Is mobile:', isMobile);
         if (event.error === 'no-speech') {
           console.log('No speech detected yet, continuing to listen...');
-          // Don't show error, just continue listening - recognition will restart automatically
+          // On mobile, restart recognition if it stops due to no-speech
+          if (isMobile && isRecording) {
+            console.log('Mobile: Attempting to restart recognition...');
+            setTimeout(() => {
+              if (recognitionRef.current && isRecording) {
+                try {
+                  recognitionRef.current.start();
+                  console.log('Recognition restarted on mobile');
+                } catch (e) {
+                  console.log('Restart failed:', e);
+                }
+              }
+            }, 100);
+          }
         } else if (event.error === 'not-allowed') {
           toast.error("Microphone access denied. Please check permissions.");
         } else if (event.error === 'aborted') {
@@ -274,8 +301,10 @@ const Record = () => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
 
-      // Start visualization
-      visualize();
+      // Start visualization (only on desktop)
+      if (!isMobile) {
+        visualize();
+      }
 
       toast.success(`Recording Step ${currentStep + 1} - ${PROMPTS[currentStep]}`);
     } catch (error) {
@@ -440,8 +469,8 @@ const Record = () => {
           </h2>
         </div>
 
-        {/* Waveform Canvas */}
-        {isRecording && (
+        {/* Waveform Canvas - only show on desktop */}
+        {isRecording && !isMobile && (
           <div className="w-full max-w-md animate-slide-up">
             <canvas
               ref={canvasRef}
@@ -449,6 +478,16 @@ const Record = () => {
               height={120}
               className="w-full h-32 rounded-lg shadow-medium"
             />
+          </div>
+        )}
+        
+        {/* Recording indicator for mobile */}
+        {isRecording && isMobile && (
+          <div className="w-full max-w-md flex justify-center animate-slide-up">
+            <div className="flex items-center gap-3 px-6 py-4 bg-card/50 backdrop-blur-sm rounded-full border border-border">
+              <div className="h-3 w-3 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-medium">Recording...</span>
+            </div>
           </div>
         )}
 
