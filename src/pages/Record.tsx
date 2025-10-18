@@ -186,7 +186,8 @@ const Record = () => {
         console.error('Error type:', event.error);
         console.error('Error message:', event.message);
         if (event.error === 'no-speech') {
-          toast.error("No speech detected. Please try speaking.");
+          console.log('No speech detected yet, continuing to listen...');
+          // Don't show error, just continue listening - recognition will restart automatically
         } else if (event.error === 'not-allowed') {
           toast.error("Microphone access denied. Please check permissions.");
         } else if (event.error === 'aborted') {
