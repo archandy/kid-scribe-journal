@@ -13,7 +13,7 @@ const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
-  const [stepAnswers, setStepAnswers] = useState<string[]>(["", "", ""]);
+  const [stepAnswers, setStepAnswers] = useState<string[]>(["", ""]);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [showReview, setShowReview] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -23,8 +23,7 @@ const Record = () => {
 
   const PROMPTS = [
     t('record.prompt1'),
-    t('record.prompt2'),
-    t('record.prompt3')
+    t('record.prompt2')
   ];
 
   const getLanguageCode = () => {
@@ -233,7 +232,7 @@ const Record = () => {
           
           // Move to next step or show review after cleanup
           if (completeTranscript) {
-            if (currentStep < 2) {
+            if (currentStep < 1) {
               console.log('Moving to next step...');
               setTimeout(() => {
                 setCurrentStep(currentStep + 1);
@@ -313,7 +312,7 @@ const Record = () => {
 
   const resetSteps = () => {
     setCurrentStep(0);
-    setStepAnswers(["", "", ""]);
+    setStepAnswers(["", ""]);
     setCurrentTranscript("");
     setShowReview(false);
     setRecordingTime(0);
@@ -434,7 +433,7 @@ const Record = () => {
 
         {/* Current Step Prompt */}
         <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">{t('record.step')} {currentStep + 1} {t('record.of')} 3</p>
+          <p className="text-sm text-muted-foreground">{t('record.step')} {currentStep + 1} {t('record.of')} 2</p>
           <h2 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
             {PROMPTS[currentStep]}
           </h2>

@@ -109,8 +109,7 @@ const ReviewSheet = ({
 
       const structuredContent = {
         whatHappened: stepAnswers[0],
-        howTheyBehaved: stepAnswers[1],
-        whatThatShows: stepAnswers[2]
+        howTheyBehaved: stepAnswers[1]
       };
 
       const { data, error } = await supabase.functions.invoke('save-to-notion', {
@@ -169,13 +168,6 @@ const ReviewSheet = ({
               <Label className="text-primary font-semibold">{t('review.howBehaved')}</Label>
               <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
                 {stepAnswers[1]}
-              </p>
-            </div>
-            
-            <div>
-              <Label className="text-primary font-semibold">{t('review.whatShows')}</Label>
-              <p className="mt-2 text-sm text-foreground bg-card/50 p-3 rounded-lg border">
-                {stepAnswers[2]}
               </p>
             </div>
           </div>
