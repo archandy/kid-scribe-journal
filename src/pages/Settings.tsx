@@ -93,11 +93,27 @@ export default function Settings() {
         return;
       }
       
+      // Generate secure state token for CSRF protection
+      const { data: stateData, error: stateError } = await supabase.functions.invoke(
+        'generate-oauth-state',
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+
+      if (stateError || !stateData?.state_token) {
+        console.error('Failed to generate state token:', stateError);
+        toast({
+          title: "Connection failed",
+          description: "Failed to initialize OAuth flow. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Detect mobile and use redirect with state parameter instead of popup
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      // Pass auth token in state for both mobile and desktop
-      let authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(session.access_token)}`;
+      // Use secure state token for CSRF protection
+      let authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(stateData.state_token)}`;
       
       if (isMobile) {
         // Mobile: redirect directly

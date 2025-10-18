@@ -42,36 +42,51 @@ Deno.serve(async (req) => {
     const tokenData = await tokenResponse.json();
     console.log('Token exchange successful');
 
-    // Get user from auth header or state parameter (for mobile redirect flow)
-    let authHeader = req.headers.get('Authorization');
-    
-    // If no auth header, try to get from state (mobile flow)
-    let userToken = authHeader;
-    if (!userToken && state) {
-      userToken = `Bearer ${state}`;
-    }
-    
-    if (!userToken) {
-      throw new Error('No authorization provided');
+    // Validate state token (CSRF protection)
+    if (!state) {
+      throw new Error('No state token provided');
     }
 
+    // Create Supabase client with service role to validate state token
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: userToken } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      throw new Error('Unauthorized');
+    // Validate and retrieve state token from database
+    const { data: stateData, error: stateError } = await supabase
+      .from('oauth_states')
+      .select('user_id, expires_at')
+      .eq('state_token', state)
+      .single();
+
+    if (stateError || !stateData) {
+      console.error('Invalid state token:', stateError);
+      throw new Error('Invalid or expired state token');
     }
+
+    // Check if token has expired
+    if (new Date(stateData.expires_at) < new Date()) {
+      console.error('State token expired');
+      throw new Error('State token has expired');
+    }
+
+    const userId = stateData.user_id;
+    console.log('State token validated successfully');
+
+    // Delete the used state token (one-time use)
+    await supabase
+      .from('oauth_states')
+      .delete()
+      .eq('state_token', state);
+
+    console.log('Used state token deleted');
 
     // Store token in database
     const { error: insertError } = await supabase
       .from('notion_tokens')
       .upsert({
-        user_id: user.id,
+        user_id: userId,
         access_token: tokenData.access_token,
         workspace_id: tokenData.workspace_id,
         workspace_name: tokenData.workspace_name,
