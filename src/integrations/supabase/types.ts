@@ -56,6 +56,7 @@ export type Database = {
           id: string
           structured_content: Json | null
           summary: string | null
+          tags: string[] | null
           transcript: string | null
           updated_at: string
           user_id: string
@@ -68,6 +69,7 @@ export type Database = {
           id?: string
           structured_content?: Json | null
           summary?: string | null
+          tags?: string[] | null
           transcript?: string | null
           updated_at?: string
           user_id: string
@@ -80,6 +82,7 @@ export type Database = {
           id?: string
           structured_content?: Json | null
           summary?: string | null
+          tags?: string[] | null
           transcript?: string | null
           updated_at?: string
           user_id?: string

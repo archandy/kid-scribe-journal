@@ -33,6 +33,7 @@ const ReviewSheet = ({
   const [children, setChildren] = useState<Array<{ id: string; name: string; photo_url?: string }>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [hasNotion, setHasNotion] = useState(false);
   const { t, language } = useLanguage();
@@ -95,6 +96,9 @@ const ReviewSheet = ({
       if (data?.summary) {
         setSummary(data.summary);
       }
+      if (data?.tags) {
+        setTags(data.tags);
+      }
     } catch (error) {
       console.error('Error generating summary:', error);
       toast.error("Failed to generate summary");
@@ -131,6 +135,7 @@ const ReviewSheet = ({
           transcript: stepAnswers.join('\n\n'),
           structured_content: structuredContent,
           summary,
+          tags: tags.length > 0 ? tags : null,
           children: selectedChildren.length > 0 ? selectedChildren : null,
           duration,
         });
@@ -232,8 +237,19 @@ const ReviewSheet = ({
                 <span className="text-sm text-muted-foreground">{t('review.generatingSummary')}</span>
               </div>
             ) : summary ? (
-              <div className="p-4 border rounded-lg bg-muted/50">
-                <p className="text-sm">{summary}</p>
+              <div className="space-y-3">
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <p className="text-sm">{summary}</p>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

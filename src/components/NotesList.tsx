@@ -22,6 +22,7 @@ interface Note {
   transcript: string;
   children: string[] | null;
   summary: string | null;
+  tags: string[] | null;
   duration: number;
   structured_content: any;
 }
@@ -124,16 +125,19 @@ const NotesList = () => {
                 </div>
               )}
 
-              {/* Children */}
-              {note.children && note.children.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {note.children.map((child) => (
-                    <Badge key={child} variant="default" className="bg-primary">
-                      {child}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              {/* Tags and Children */}
+              <div className="flex flex-wrap gap-2">
+                {note.tags && note.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    #{tag}
+                  </Badge>
+                ))}
+                {note.children && note.children.map((child) => (
+                  <Badge key={child} variant="default" className="bg-primary">
+                    {child}
+                  </Badge>
+                ))}
+              </div>
             </CardContent>
           </Card>
         ))}
