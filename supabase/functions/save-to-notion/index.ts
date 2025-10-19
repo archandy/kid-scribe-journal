@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
     metadata.push(`📅 Date: ${date.toLocaleString()}`);
     if (children && children.length > 0) metadata.push(`👶 Children: ${children.join(', ')}`);
     if (duration) metadata.push(`⏱️ Duration: ${Math.round(duration)}s`);
+    if (tags && tags.length > 0) metadata.push(`🏷️ Tags: ${tags.join(', ')}`);
     
     if (metadata.length > 0) {
       contentBlocks.push({
@@ -157,28 +158,6 @@ Deno.serve(async (req) => {
           rich_text: [{ type: 'text', text: { content: summary } }],
         },
       });
-    }
-
-    // Add tags if available
-    if (tags && tags.length > 0) {
-      console.log('Adding tags to Notion page:', tags);
-      contentBlocks.push({
-        object: 'block',
-        type: 'heading_3',
-        heading_3: {
-          rich_text: [{ type: 'text', text: { content: '🏷️ Tags:' } }],
-        },
-      });
-
-      contentBlocks.push({
-        object: 'block',
-        type: 'paragraph',
-        paragraph: {
-          rich_text: [{ type: 'text', text: { content: tags.join(', ') } }],
-        },
-      });
-    } else {
-      console.log('No tags to add - tags:', tags);
     }
 
     // Determine parent
