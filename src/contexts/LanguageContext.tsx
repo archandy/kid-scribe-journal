@@ -96,6 +96,7 @@ const translations: Record<Language, Record<string, string>> = {
     'common.save': 'Save',
     'common.cancel': 'Cancel',
     'common.back': 'Back',
+    'common.yearsOld': 'years old',
   },
   ja: {
     // Header
@@ -181,6 +182,7 @@ const translations: Record<Language, Record<string, string>> = {
     'common.save': '保存',
     'common.cancel': 'キャンセル',
     'common.back': '戻る',
+    'common.yearsOld': '歳',
   },
   ko: {
     // Header
@@ -266,6 +268,7 @@ const translations: Record<Language, Record<string, string>> = {
     'common.save': '저장',
     'common.cancel': '취소',
     'common.back': '뒤로',
+    'common.yearsOld': '살',
   },
 };
 

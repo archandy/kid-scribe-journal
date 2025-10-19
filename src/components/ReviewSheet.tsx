@@ -191,7 +191,7 @@ const ReviewSheet = ({
         const child = children.find(c => c.name === childName);
         if (child) {
           const age = calculateAge(child.birthdate);
-          return `${childName} (${age} years old)`;
+          return `${childName} (${age} ${t('common.yearsOld')})`;
         }
         return childName;
       });
