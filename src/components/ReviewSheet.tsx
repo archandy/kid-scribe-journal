@@ -19,6 +19,13 @@ interface ReviewSheetProps {
   onSaved: () => void;
 }
 
+interface Child {
+  id: string;
+  name: string;
+  photo_url?: string;
+  birthdate: string;
+}
+
 
 
 const ReviewSheet = ({
@@ -30,7 +37,7 @@ const ReviewSheet = ({
   onSaved,
 }: ReviewSheetProps) => {
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
-  const [children, setChildren] = useState<Array<{ id: string; name: string; photo_url?: string }>>([]);
+  const [children, setChildren] = useState<Child[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -38,14 +45,25 @@ const ReviewSheet = ({
   const [hasNotion, setHasNotion] = useState(false);
   const { t, language } = useLanguage();
 
+  const calculateAge = (birthdate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   // Fetch children and check Notion connection
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch children
+        // Fetch children with birthdates
         const { data: childrenData, error: childrenError } = await supabase
           .from("children")
-          .select("id, name, photo_url")
+          .select("id, name, photo_url, birthdate")
           .order("name");
 
         if (childrenError) throw childrenError;
@@ -168,14 +186,25 @@ const ReviewSheet = ({
         howTheyBehaved: stepAnswers[1]
       };
 
+      // Prepare children data with ages
+      const childrenWithAges = selectedChildren.map(childName => {
+        const child = children.find(c => c.name === childName);
+        if (child) {
+          const age = calculateAge(child.birthdate);
+          return `${childName} (${age} years old)`;
+        }
+        return childName;
+      });
+
       console.log('Sending to Notion - tags:', tags);
       console.log('Tags length:', tags.length);
+      console.log('Children with ages:', childrenWithAges);
 
       const { data, error } = await supabase.functions.invoke('save-to-notion', {
         body: {
           structuredContent,
           summary,
-          children: selectedChildren.length > 0 ? selectedChildren : undefined,
+          children: childrenWithAges.length > 0 ? childrenWithAges : undefined,
           duration,
           tags: tags.length > 0 ? tags : undefined,
         },
