@@ -45,6 +45,10 @@ Deno.serve(async (req) => {
     // Get note data from request
     const { structuredContent, summary, children, duration, tags } = await req.json();
 
+    console.log('Received tags:', tags);
+    console.log('Tags type:', typeof tags);
+    console.log('Tags is array:', Array.isArray(tags));
+
     if (!structuredContent) {
       throw new Error('Structured content is required');
     }
@@ -157,6 +161,7 @@ Deno.serve(async (req) => {
 
     // Add tags if available
     if (tags && tags.length > 0) {
+      console.log('Adding tags to Notion page:', tags);
       contentBlocks.push({
         object: 'block',
         type: 'heading_3',
@@ -172,6 +177,8 @@ Deno.serve(async (req) => {
           rich_text: [{ type: 'text', text: { content: tags.join(', ') } }],
         },
       });
+    } else {
+      console.log('No tags to add - tags:', tags);
     }
 
     // Determine parent

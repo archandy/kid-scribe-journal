@@ -168,6 +168,9 @@ const ReviewSheet = ({
         howTheyBehaved: stepAnswers[1]
       };
 
+      console.log('Sending to Notion - tags:', tags);
+      console.log('Tags length:', tags.length);
+
       const { data, error } = await supabase.functions.invoke('save-to-notion', {
         body: {
           structuredContent,
@@ -177,6 +180,8 @@ const ReviewSheet = ({
           tags: tags.length > 0 ? tags : undefined,
         },
       });
+
+      console.log('Notion response:', data);
 
       if (error) {
         throw error;
