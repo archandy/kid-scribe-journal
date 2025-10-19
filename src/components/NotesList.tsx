@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,32 +28,65 @@ interface Note {
   structured_content: any;
 }
 
+interface Child {
+  id: string;
+  name: string;
+  birthdate: string;
+}
+
 const NotesList = () => {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [children, setChildren] = useState<Child[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
-    fetchNotes();
+    fetchData();
   }, []);
 
-  const fetchNotes = async () => {
+  const fetchData = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .order('date', { ascending: false });
+      
+      // Fetch notes and children in parallel
+      const [notesResult, childrenResult] = await Promise.all([
+        supabase.from('notes').select('*').order('date', { ascending: false }),
+        supabase.from('children').select('id, name, birthdate')
+      ]);
 
-      if (error) throw error;
-      setNotes(data || []);
+      if (notesResult.error) throw notesResult.error;
+      if (childrenResult.error) throw childrenResult.error;
+      
+      setNotes(notesResult.data || []);
+      setChildren(childrenResult.data || []);
     } catch (error) {
-      console.error('Error fetching notes:', error);
+      console.error('Error fetching data:', error);
       toast.error('Failed to load notes');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const calculateAgeAtDate = (birthdate: string, noteDate: string): number => {
+    const note = new Date(noteDate);
+    const birth = new Date(birthdate);
+    let age = note.getFullYear() - birth.getFullYear();
+    const monthDiff = note.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && note.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const getChildDisplayName = (childName: string, noteDate: string): string => {
+    const child = children.find(c => c.name === childName);
+    if (child) {
+      const age = calculateAgeAtDate(child.birthdate, noteDate);
+      return `${childName} (${age} ${t('common.yearsOld')})`;
+    }
+    return childName;
   };
 
   const handleDelete = async () => {
@@ -134,7 +168,7 @@ const NotesList = () => {
                 ))}
                 {note.children && note.children.map((child) => (
                   <Badge key={child} variant="default" className="bg-primary">
-                    {child}
+                    {getChildDisplayName(child, note.date)}
                   </Badge>
                 ))}
               </div>
