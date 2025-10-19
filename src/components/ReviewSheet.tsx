@@ -34,26 +34,38 @@ const ReviewSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [hasNotion, setHasNotion] = useState(false);
   const { t, language } = useLanguage();
 
-  // Fetch children from database
+  // Fetch children and check Notion connection
   useEffect(() => {
-    const fetchChildren = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch children
+        const { data: childrenData, error: childrenError } = await supabase
           .from("children")
           .select("id, name, photo_url")
           .order("name");
 
-        if (error) throw error;
-        setChildren(data || []);
+        if (childrenError) throw childrenError;
+        setChildren(childrenData || []);
+
+        // Check if Notion is connected
+        const { data: notionData, error: notionError } = await supabase
+          .from("notion_tokens")
+          .select("id")
+          .maybeSingle();
+
+        if (!notionError && notionData) {
+          setHasNotion(true);
+        }
       } catch (error) {
-        console.error("Error fetching children:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
     if (open) {
-      fetchChildren();
+      fetchData();
     }
   }, [open]);
 
@@ -95,6 +107,45 @@ const ReviewSheet = ({
     setSelectedChildren(prev =>
       prev.includes(child) ? prev.filter(c => c !== child) : [...prev, child]
     );
+  };
+
+  const saveToDatabase = async () => {
+    setIsSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please sign in to save");
+        return;
+      }
+
+      const structuredContent = {
+        whatHappened: stepAnswers[0],
+        howTheyBehaved: stepAnswers[1]
+      };
+
+      const { error } = await supabase
+        .from('notes')
+        .insert({
+          user_id: session.user.id,
+          transcript: stepAnswers.join('\n\n'),
+          structured_content: structuredContent,
+          summary,
+          children: selectedChildren.length > 0 ? selectedChildren : null,
+          duration,
+        });
+
+      if (error) throw error;
+
+      toast.success("Note saved successfully");
+      onSaved();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving note:', error);
+      toast.error('Failed to save note');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const saveToNotion = async () => {
@@ -220,22 +271,44 @@ const ReviewSheet = ({
           <div className="flex flex-col gap-3 pt-4 border-t">
             <Button
               size="lg"
-              onClick={saveToNotion}
+              onClick={saveToDatabase}
               disabled={isSaving}
               className="w-full bg-primary"
             >
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('review.savingToNotion')}
+                  Saving...
                 </>
               ) : (
                 <>
                   <Database className="mr-2 h-4 w-4" />
-                  {t('review.saveToNotion')}
+                  Save Note
                 </>
               )}
             </Button>
+
+            {hasNotion && (
+              <Button
+                size="lg"
+                onClick={saveToNotion}
+                disabled={isSaving}
+                variant="outline"
+                className="w-full"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('review.savingToNotion')}
+                  </>
+                ) : (
+                  <>
+                    <Database className="mr-2 h-4 w-4" />
+                    {t('review.saveToNotion')}
+                  </>
+                )}
+              </Button>
+            )}
 
             <Button
               variant="ghost"

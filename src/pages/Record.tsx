@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -427,6 +427,14 @@ const Record = () => {
         </div>
         <div className="flex gap-2">
           <LanguageSelector />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/notes')}
+            className="rounded-full"
+          >
+            <BookOpen className="h-5 w-5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

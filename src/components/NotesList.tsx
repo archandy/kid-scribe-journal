@@ -1,32 +1,91 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, ExternalLink } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Sample data - will be replaced with real data from IndexedDB/Notion
-const SAMPLE_NOTES = [
-  {
-    id: "1",
-    date: "2025-01-15",
-    transcript: "Hana showed amazing creativity today building a castle out of blocks...",
-    children: ["Hana"],
-    tags: ["creativity", "motor skills"],
-    sentiment: "very positive",
-    duration: 45,
-  },
-  {
-    id: "2",
-    date: "2025-01-14",
-    transcript: "Sena asked so many questions about the stars and planets...",
-    children: ["Sena"],
-    tags: ["curiosity", "language"],
-    sentiment: "positive",
-    duration: 62,
-  },
-];
+interface Note {
+  id: string;
+  date: string;
+  transcript: string;
+  children: string[] | null;
+  summary: string | null;
+  duration: number;
+  structured_content: any;
+}
 
 const NotesList = () => {
-  if (SAMPLE_NOTES.length === 0) {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  const fetchNotes = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      setNotes(data || []);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      toast.error('Failed to load notes');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase
+        .from('notes')
+        .delete()
+        .eq('id', deleteId);
+
+      if (error) throw error;
+      
+      setNotes(notes.filter(note => note.id !== deleteId));
+      toast.success('Note deleted successfully');
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast.error('Failed to delete note');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (notes.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">No notes yet. Start recording to capture your first moment!</p>
@@ -35,58 +94,75 @@ const NotesList = () => {
   }
 
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Recent Notes</h2>
-        <Button variant="ghost" size="sm">View All</Button>
+    <>
+      <div className="space-y-4 max-w-2xl mx-auto">
+        {notes.map((note) => (
+          <Card key={note.id} className="overflow-hidden hover:shadow-medium transition-shadow">
+            <CardContent className="p-4 space-y-3">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(note.date).toLocaleDateString()} • {note.duration}s
+                  </p>
+                  <p className="text-sm line-clamp-2">{note.transcript || note.summary}</p>
+                </div>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="shrink-0"
+                  onClick={() => setDeleteId(note.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Summary */}
+              {note.summary && (
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm">{note.summary}</p>
+                </div>
+              )}
+
+              {/* Children */}
+              {note.children && note.children.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {note.children.map((child) => (
+                    <Badge key={child} variant="default" className="bg-primary">
+                      {child}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {SAMPLE_NOTES.map((note) => (
-        <Card key={note.id} className="overflow-hidden hover:shadow-medium transition-shadow">
-          <CardContent className="p-4 space-y-3">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  {new Date(note.date).toLocaleDateString()} • {note.duration}s
-                </p>
-                <p className="text-sm line-clamp-2">{note.transcript}</p>
-              </div>
-              <Button size="icon" variant="ghost" className="shrink-0">
-                <Play className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Children & Tags */}
-            <div className="flex flex-wrap gap-2">
-              {note.children.map((child) => (
-                <Badge key={child} variant="default" className="bg-primary">
-                  {child}
-                </Badge>
-              ))}
-              {note.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-              <Badge variant="secondary">
-                {note.sentiment === "very positive" && "😊"}
-                {note.sentiment === "positive" && "🙂"}
-                {note.sentiment === "neutral" && "😐"}
-              </Badge>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-2">
-              <Button variant="ghost" size="sm" className="text-xs">
-                <ExternalLink className="h-3 w-3 mr-1" />
-                Open in Notion
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Note</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this note? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

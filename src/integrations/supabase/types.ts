@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          children: string[] | null
+          created_at: string
+          date: string
+          duration: number | null
+          id: string
+          structured_content: Json | null
+          summary: string | null
+          transcript: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          children?: string[] | null
+          created_at?: string
+          date?: string
+          duration?: number | null
+          id?: string
+          structured_content?: Json | null
+          summary?: string | null
+          transcript?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          children?: string[] | null
+          created_at?: string
+          date?: string
+          duration?: number | null
+          id?: string
+          structured_content?: Json | null
+          summary?: string | null
+          transcript?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notion_tokens: {
         Row: {
           access_token: string
