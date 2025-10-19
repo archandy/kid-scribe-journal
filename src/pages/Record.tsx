@@ -272,6 +272,12 @@ const Record = () => {
             }
           } else {
             console.error('No transcript captured');
+            // Stop recording and reset state
+            setIsRecording(false);
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
             toast.error("No speech was detected. Please try again.");
             setCurrentTranscript('');
           }

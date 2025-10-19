@@ -174,6 +174,7 @@ const ReviewSheet = ({
           summary,
           children: selectedChildren.length > 0 ? selectedChildren : undefined,
           duration,
+          tags: tags.length > 0 ? tags : undefined,
         },
       });
 

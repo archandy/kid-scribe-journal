@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const parentPageId = tokenData.database_id;
 
     // Get note data from request
-    const { structuredContent, summary, children, duration } = await req.json();
+    const { structuredContent, summary, children, duration, tags } = await req.json();
 
     if (!structuredContent) {
       throw new Error('Structured content is required');
@@ -151,6 +151,25 @@ Deno.serve(async (req) => {
         type: 'paragraph',
         paragraph: {
           rich_text: [{ type: 'text', text: { content: summary } }],
+        },
+      });
+    }
+
+    // Add tags if available
+    if (tags && tags.length > 0) {
+      contentBlocks.push({
+        object: 'block',
+        type: 'heading_3',
+        heading_3: {
+          rich_text: [{ type: 'text', text: { content: '🏷️ Tags:' } }],
+        },
+      });
+
+      contentBlocks.push({
+        object: 'block',
+        type: 'paragraph',
+        paragraph: {
+          rich_text: [{ type: 'text', text: { content: tags.join(', ') } }],
         },
       });
     }

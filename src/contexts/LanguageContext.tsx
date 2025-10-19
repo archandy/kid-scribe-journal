@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Language = 'en' | 'ja' | 'ko';
 
@@ -271,12 +272,45 @@ const translations: Record<Language, Record<string, string>> = {
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('en');
 
+  // Load language preference from database
+  useEffect(() => {
+    const loadLanguagePreference = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('language')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.language) {
+          setLanguage(profile.language as Language);
+        }
+      }
+    };
+
+    loadLanguagePreference();
+  }, []);
+
+  // Save language preference to database
+  const handleSetLanguage = async (lang: Language) => {
+    setLanguage(lang);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ language: lang })
+        .eq('id', user.id);
+    }
+  };
+
   const t = (key: string): string => {
     return translations[language][key] || key;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
