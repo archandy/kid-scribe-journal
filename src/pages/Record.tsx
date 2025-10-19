@@ -200,21 +200,37 @@ const Record = () => {
         console.error('Error message:', event.message);
         console.error('Is mobile:', isMobile);
         if (event.error === 'no-speech') {
-          console.log('No speech detected yet, continuing to listen...');
-          // On mobile, restart recognition if it stops due to no-speech
-          if (isMobile && isRecording) {
-            console.log('Mobile: Attempting to restart recognition...');
-            setTimeout(() => {
-              if (recognitionRef.current && isRecording) {
-                try {
-                  recognitionRef.current.start();
-                  console.log('Recognition restarted on mobile');
-                } catch (e) {
-                  console.log('Restart failed:', e);
-                }
-              }
-            }, 100);
+          console.log('No speech detected - stopping recording');
+          // Stop recording immediately
+          setIsRecording(false);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
           }
+          if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+          }
+          // Clean up resources
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+          if (audioContextRef.current) {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+          }
+          // Stop recognition
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.stop();
+            } catch (e) {
+              console.log('Stop error:', e);
+            }
+            recognitionRef.current = null;
+          }
+          toast.error("No speech was detected. Please try again.");
+          setCurrentTranscript('');
         } else if (event.error === 'not-allowed') {
           toast.error("Microphone access denied. Please check permissions.");
         } else if (event.error === 'aborted') {
