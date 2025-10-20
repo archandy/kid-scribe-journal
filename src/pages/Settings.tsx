@@ -9,6 +9,7 @@ import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users } fro
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import FamilyManagement from "@/components/FamilyManagement";
 import { z } from "zod";
 
 // Validation schema for Notion database ID
@@ -282,6 +283,8 @@ export default function Settings() {
               </Button>
             </CardContent>
           </Card>
+
+          <FamilyManagement />
 
           <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
             <CardHeader>

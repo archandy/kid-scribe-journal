@@ -8,6 +8,7 @@ import Settings from "./pages/Settings";
 import Children from "./pages/Children";
 import Auth from "./pages/Auth";
 import Notes from "./pages/Notes";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/children" element={<Children />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/accept-invitation" element={<AcceptInvitation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

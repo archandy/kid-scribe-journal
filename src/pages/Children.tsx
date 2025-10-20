@@ -132,11 +132,24 @@ const Children = () => {
         return;
       }
 
+      // Get user's family
+      const { data: familyMember, error: familyError } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (familyError || !familyMember) {
+        toast.error('Could not find your family. Please try again.');
+        return;
+      }
+
       const childData = {
         name: data.name,
         birthdate: data.birthdate,
         photo_url: data.photo_url || null,
         user_id: session.user.id,
+        family_id: familyMember.family_id,
       };
 
       if (data.id) {
