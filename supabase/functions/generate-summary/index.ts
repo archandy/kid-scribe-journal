@@ -8,9 +8,9 @@ const corsHeaders = {
 
 const getLanguageInstruction = (language: string) => {
   const instructions: Record<string, string> = {
-    'en': 'Generate a concise summary in English.',
-    'ja': '日本語で簡潔な要約を生成してください。',
-    'ko': '한국어로 간결한 요약을 생성하세요.'
+    'en': 'Generate a concise summary in English. Generate hashtags in English.',
+    'ja': '日本語で簡潔な要約を生成してください。ハッシュタグも日本語で生成してください。',
+    'ko': '한국어로 간결한 요약을 생성하세요. 해시태그도 한국어로 생성하세요.'
   };
   return instructions[language] || instructions['en'];
 };
@@ -48,7 +48,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a helpful assistant that analyzes parent journal entries about their children. ${languageInstruction} Identify key behavioral patterns and developmental milestones. Create relevant hashtags for categorization and trend analysis.`
+            content: `You are a helpful assistant that analyzes parent journal entries about their children. ${languageInstruction} Identify key behavioral patterns and developmental milestones. Create relevant hashtags in the SAME LANGUAGE as the input text for categorization and trend analysis.`
           },
           {
             role: 'user',
@@ -60,7 +60,7 @@ serve(async (req) => {
             type: 'function',
             function: {
               name: 'analyze_journal_entry',
-              description: 'Analyze a parent journal entry about their child and return a summary with behavioral hashtags',
+              description: 'Analyze a parent journal entry about their child and return a summary with behavioral hashtags in the same language as the input',
               parameters: {
                 type: 'object',
                 properties: {
@@ -71,7 +71,7 @@ serve(async (req) => {
                   tags: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Behavioral hashtags (3-5 tags) categorizing the child\'s behavior, development, or activity. Examples: creativity, curiosity, motor-skills, language-development, social-skills, problem-solving, emotional-regulation'
+                    description: 'Behavioral hashtags (3-5 tags) in the SAME LANGUAGE as the input text, categorizing the child\'s behavior, development, or activity. Examples for English: creativity, curiosity, motor-skills, language-development, social-skills, problem-solving, emotional-regulation. For Japanese: 創造性, 好奇心, 運動能力, 言語発達, 社交性, 問題解決, 感情調整. For Korean: 창의성, 호기심, 운동능력, 언어발달, 사회성, 문제해결, 감정조절'
                   }
                 },
                 required: ['summary', 'tags'],
