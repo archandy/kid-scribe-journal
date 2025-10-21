@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           birthdate: string
           created_at: string
+          family_id: string
           id: string
           name: string
           photo_emoji: string | null
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           birthdate: string
           created_at?: string
+          family_id: string
           id?: string
           name: string
           photo_emoji?: string | null
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           birthdate?: string
           created_at?: string
+          family_id?: string
           id?: string
           name?: string
           photo_emoji?: string | null
@@ -45,7 +48,109 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "children_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      families: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          updated_at?: string
+        }
         Relationships: []
+      }
+      family_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          family_id: string
+          id: string
+          invited_by: string
+          status: Database["public"]["Enums"]["invitation_status"]
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          family_id: string
+          id?: string
+          invited_by: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          family_id?: string
+          id?: string
+          invited_by?: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_invitations_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_members: {
+        Row: {
+          family_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["family_role"]
+          user_id: string
+        }
+        Insert: {
+          family_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["family_role"]
+          user_id: string
+        }
+        Update: {
+          family_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["family_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
@@ -53,6 +158,7 @@ export type Database = {
           created_at: string
           date: string
           duration: number | null
+          family_id: string
           id: string
           structured_content: Json | null
           summary: string | null
@@ -66,6 +172,7 @@ export type Database = {
           created_at?: string
           date?: string
           duration?: number | null
+          family_id: string
           id?: string
           structured_content?: Json | null
           summary?: string | null
@@ -79,6 +186,7 @@ export type Database = {
           created_at?: string
           date?: string
           duration?: number | null
+          family_id?: string
           id?: string
           structured_content?: Json | null
           summary?: string | null
@@ -87,7 +195,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notes_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notion_tokens: {
         Row: {
@@ -184,7 +300,8 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      family_role: "owner" | "admin" | "member"
+      invitation_status: "pending" | "accepted" | "expired" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -311,6 +428,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      family_role: ["owner", "admin", "member"],
+      invitation_status: ["pending", "accepted", "expired", "cancelled"],
+    },
   },
 } as const
