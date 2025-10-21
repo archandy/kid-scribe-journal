@@ -69,17 +69,27 @@ export default function FamilyManagement() {
           id,
           user_id,
           role,
-          joined_at,
-          profiles (
-            email,
-            full_name
-          )
+          joined_at
         `)
         .eq('family_id', myFamily.family_id)
         .order('joined_at', { ascending: true });
 
       if (membersError) throw membersError;
-      setMembers(membersData || []);
+
+      // Fetch profiles separately
+      const userIds = membersData?.map(m => m.user_id) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds);
+
+      // Merge members with profiles
+      const membersWithProfiles = membersData?.map(member => ({
+        ...member,
+        profiles: profilesData?.find(p => p.id === member.user_id) || { email: '', full_name: null }
+      })) || [];
+
+      setMembers(membersWithProfiles);
 
       // Fetch invitations
       const { data: invitationsData, error: invitationsError } = await supabase

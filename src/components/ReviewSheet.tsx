@@ -146,10 +146,22 @@ const ReviewSheet = ({
         howTheyBehaved: stepAnswers[1]
       };
 
+      // Get user's family_id
+      const { data: familyData } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!familyData) {
+        throw new Error('No family found');
+      }
+
       const { error } = await supabase
         .from('notes')
         .insert({
           user_id: session.user.id,
+          family_id: familyData.family_id,
           transcript: stepAnswers.join('\n\n'),
           structured_content: structuredContent,
           summary,
