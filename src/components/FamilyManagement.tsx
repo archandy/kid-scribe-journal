@@ -137,11 +137,6 @@ export default function FamilyManagement() {
         return;
       }
 
-      toast({
-        title: "Invitation sent!",
-        description: `An invitation has been sent to ${email}`,
-      });
-
       setEmail("");
       fetchFamilyData();
 
@@ -149,8 +144,8 @@ export default function FamilyManagement() {
       if (data.invitationLink) {
         await navigator.clipboard.writeText(data.invitationLink);
         toast({
-          title: "Link copied!",
-          description: "Invitation link has been copied to your clipboard",
+          title: "Invitation link created!",
+          description: "The link has been copied to your clipboard. Share it with your family member.",
         });
       }
 
@@ -222,7 +217,7 @@ export default function FamilyManagement() {
             Invite Family Member
           </CardTitle>
           <CardDescription>
-            Invite another parent or guardian to join your family
+            Create an invitation link to share with another parent or guardian
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,7 +231,7 @@ export default function FamilyManagement() {
               disabled={isLoading}
             />
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send Invite"}
+              {isLoading ? "Creating..." : "Create Link"}
             </Button>
           </form>
         </CardContent>
