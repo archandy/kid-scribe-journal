@@ -228,6 +228,9 @@ const ReviewSheet = ({
         throw error;
       }
 
+      // Also save to database after successful Notion save
+      await saveToDatabase();
+
       toast.success(t('review.savedSuccess'), {
         description: data?.url ? "Click to open in Notion" : undefined,
         action: data?.url ? {

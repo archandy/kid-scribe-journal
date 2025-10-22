@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import NotesList from "@/components/NotesList";
+import BehaviorSummary from "@/components/BehaviorSummary";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Notes = () => {
@@ -34,6 +35,7 @@ const Notes = () => {
 
       {/* Main Content */}
       <main className="p-6">
+        <BehaviorSummary />
         <NotesList />
       </main>
     </div>
