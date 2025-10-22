@@ -39,7 +39,7 @@ serve(async (req) => {
       });
     }
 
-    const { language = 'en' } = await req.json();
+    const { language = 'en', childId } = await req.json();
 
     // Get user's family_id
     const { data: familyMember } = await supabaseClient
@@ -55,13 +55,31 @@ serve(async (req) => {
       });
     }
 
-    // Fetch all notes for the family
-    const { data: notes } = await supabaseClient
+    // Get child name if filtering
+    let childName: string | null = null;
+    if (childId) {
+      const { data: childData } = await supabaseClient
+        .from("children")
+        .select("name")
+        .eq("id", childId)
+        .single();
+      childName = childData?.name || null;
+    }
+
+    // Build query for notes
+    let notesQuery = supabaseClient
       .from("notes")
       .select("summary, tags, children, structured_content, date")
       .eq("family_id", familyMember.family_id)
       .order("date", { ascending: false })
       .limit(50); // Analyze last 50 notes
+
+    // Filter by child if specified
+    if (childName) {
+      notesQuery = notesQuery.contains("children", [childName]);
+    }
+
+    const { data: notes } = await notesQuery;
 
     if (!notes || notes.length === 0) {
       return new Response(

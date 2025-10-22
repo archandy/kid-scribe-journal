@@ -34,7 +34,11 @@ interface Child {
   birthdate: string;
 }
 
-const NotesList = () => {
+interface NotesListProps {
+  childId?: string;
+}
+
+const NotesList = ({ childId }: NotesListProps = {}) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,15 +48,35 @@ const NotesList = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [childId]);
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       
+      // Build notes query
+      let notesQuery = supabase
+        .from('notes')
+        .select('*')
+        .order('date', { ascending: false });
+
+      // Filter by child if specified
+      if (childId) {
+        // Get child name first
+        const { data: childData } = await supabase
+          .from('children')
+          .select('name')
+          .eq('id', childId)
+          .single();
+        
+        if (childData) {
+          notesQuery = notesQuery.contains('children', [childData.name]);
+        }
+      }
+      
       // Fetch notes and children in parallel
       const [notesResult, childrenResult] = await Promise.all([
-        supabase.from('notes').select('*').order('date', { ascending: false }),
+        notesQuery,
         supabase.from('children').select('id, name, birthdate')
       ]);
 

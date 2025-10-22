@@ -17,20 +17,24 @@ interface BehaviorAnalysis {
   encouragement: string;
 }
 
-const BehaviorSummary = () => {
+interface BehaviorSummaryProps {
+  childId?: string;
+}
+
+const BehaviorSummary = ({ childId }: BehaviorSummaryProps = {}) => {
   const [analysis, setAnalysis] = useState<BehaviorAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { language } = useLanguage();
 
   useEffect(() => {
     fetchBehaviorAnalysis();
-  }, [language]);
+  }, [language, childId]);
 
   const fetchBehaviorAnalysis = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-behavior', {
-        body: { language }
+        body: { language, childId }
       });
 
       if (error) {
