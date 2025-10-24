@@ -119,16 +119,24 @@ export default function FamilyManagement() {
           description: "You must be logged in to send invitations",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
+
+      console.log('Sending invitation to:', email);
 
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: { email },
       });
 
-      if (error) throw error;
+      console.log('Invitation response:', { data, error });
 
-      if (data.error) {
+      if (error) {
+        console.error('Function invoke error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
         toast({
           title: "Error",
           description: data.error,
@@ -137,17 +145,25 @@ export default function FamilyManagement() {
         return;
       }
 
+      if (!data?.invitationLink) {
+        console.error('No invitation link in response:', data);
+        toast({
+          title: "Error",
+          description: "Failed to generate invitation link",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setEmail("");
-      fetchFamilyData();
+      await fetchFamilyData();
 
       // Copy invitation link to clipboard
-      if (data.invitationLink) {
-        await navigator.clipboard.writeText(data.invitationLink);
-        toast({
-          title: "Invitation link created!",
-          description: "The link has been copied to your clipboard. Share it with your family member.",
-        });
-      }
+      await navigator.clipboard.writeText(data.invitationLink);
+      toast({
+        title: "Invitation link created!",
+        description: "The link has been copied to your clipboard. Share it with your family member.",
+      });
 
     } catch (error: any) {
       console.error('Error sending invitation:', error);
