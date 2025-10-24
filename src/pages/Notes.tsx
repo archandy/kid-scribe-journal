@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import NotesList from "@/components/NotesList";
 import BehaviorSummary from "@/components/BehaviorSummary";
+import HashtagBubbleChart from "@/components/HashtagBubbleChart";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
@@ -85,12 +86,14 @@ const Notes = () => {
 
             <TabsContent value="all">
               <BehaviorSummary />
+              <HashtagBubbleChart />
               <NotesList />
             </TabsContent>
 
             {children.map((child) => (
               <TabsContent key={child.id} value={child.id}>
                 <BehaviorSummary childId={child.id} />
+                <HashtagBubbleChart childId={child.id} />
                 <NotesList childId={child.id} />
               </TabsContent>
             ))}
