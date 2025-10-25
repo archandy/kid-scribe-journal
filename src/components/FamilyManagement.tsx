@@ -128,6 +128,9 @@ export default function FamilyManagement() {
 
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: { email },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       console.log('Invitation response:', { data, error });
