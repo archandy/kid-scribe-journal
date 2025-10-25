@@ -23,21 +23,17 @@ serve(async (req) => {
 
     const jwtToken = authHeader.replace('Bearer ', '');
     
-    const supabaseClient = createClient(
+    // Create client for authentication check (using anon key with JWT)
+    const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: `Bearer ${jwtToken}` },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     // Get the authenticated user using the JWT token
     const {
       data: { user },
       error: authError,
-    } = await supabaseClient.auth.getUser(jwtToken);
+    } = await authClient.auth.getUser(jwtToken);
 
     if (authError || !user) {
       console.error('Auth error:', authError);
@@ -46,6 +42,12 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Create admin client for database operations (using service role key)
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     const { email } = await req.json();
 
