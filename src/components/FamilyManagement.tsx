@@ -43,6 +43,7 @@ export default function FamilyManagement() {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [invitationToCancel, setInvitationToCancel] = useState<string | null>(null);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -156,13 +157,12 @@ export default function FamilyManagement() {
       }
 
       setEmail("");
+      setGeneratedLink(data.invitationLink);
       await fetchFamilyData();
 
-      // Copy invitation link to clipboard
-      await navigator.clipboard.writeText(data.invitationLink);
       toast({
-        title: "Invitation link created!",
-        description: "The link has been copied to your clipboard. Share it with your family member.",
+        title: "Invitation link generated!",
+        description: "Share this link with your family member.",
       });
 
     } catch (error: any) {
@@ -237,18 +237,50 @@ export default function FamilyManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSendInvitation} className="flex gap-2">
-            <Input
-              type="email"
-              placeholder="Enter email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Link"}
-            </Button>
+          <form onSubmit={handleSendInvitation} className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Generating..." : "Generate Link"}
+              </Button>
+            </div>
+            
+            {generatedLink && (
+              <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
+                <p className="text-sm font-medium">Invitation Link:</p>
+                <div className="flex gap-2">
+                  <Input
+                    value={generatedLink}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(generatedLink);
+                      toast({
+                        title: "Copied!",
+                        description: "Link copied to clipboard",
+                      });
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Share this link with the person you want to invite. They can use it to join your family.
+                </p>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>
