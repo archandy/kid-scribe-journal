@@ -85,23 +85,28 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is already in the family
-    const { data: existingMember } = await supabaseClient
-      .from('family_members')
+    // Check if user with this email already exists in profiles
+    const { data: existingProfile } = await supabaseClient
+      .from('profiles')
       .select('id')
-      .eq('family_id', familyMember.family_id)
-      .eq('user_id', (await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle())?.data?.id || '')
+      .eq('email', email)
       .maybeSingle();
 
-    if (existingMember) {
-      return new Response(
-        JSON.stringify({ error: 'User is already a member of this family' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // If profile exists, check if they're already in the family
+    if (existingProfile) {
+      const { data: existingMember } = await supabaseClient
+        .from('family_members')
+        .select('id')
+        .eq('family_id', familyMember.family_id)
+        .eq('user_id', existingProfile.id)
+        .maybeSingle();
+
+      if (existingMember) {
+        return new Response(
+          JSON.stringify({ error: 'User is already a member of this family' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Check for existing pending invitation
