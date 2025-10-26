@@ -51,11 +51,19 @@ export default function AcceptInvitation() {
         return;
       }
 
+      console.log('Calling accept-invitation with token:', token);
+      console.log('Session user:', session.user.email);
+
       const { data, error } = await supabase.functions.invoke('accept-invitation', {
         body: { token },
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Function invocation error:', error);
+        throw error;
+      }
 
       if (data.error) {
         setError(data.error);
