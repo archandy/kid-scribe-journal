@@ -37,10 +37,11 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      const finalRedirect = redirectTo || '/';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${finalRedirect}`,
         },
       });
 
