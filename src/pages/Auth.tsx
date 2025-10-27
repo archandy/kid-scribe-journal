@@ -18,15 +18,16 @@ export default function Auth() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Check for stored redirect from OAuth flow
-      const storedRedirect = localStorage.getItem('auth_redirect');
+      // Check for stored redirect from OAuth flow (use sessionStorage for mobile compatibility)
+      const storedRedirect = sessionStorage.getItem('auth_redirect');
       
       if (session) {
         if (storedRedirect) {
-          localStorage.removeItem('auth_redirect');
-          navigate(decodeURIComponent(storedRedirect));
+          sessionStorage.removeItem('auth_redirect');
+          // Use replace instead of navigate to avoid back button issues
+          window.location.replace(decodeURIComponent(storedRedirect));
         } else if (redirectTo) {
-          navigate(decodeURIComponent(redirectTo));
+          window.location.replace(decodeURIComponent(redirectTo));
         } else {
           navigate("/");
         }
@@ -38,13 +39,14 @@ export default function Auth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        const storedRedirect = localStorage.getItem('auth_redirect');
+        const storedRedirect = sessionStorage.getItem('auth_redirect');
         
         if (storedRedirect) {
-          localStorage.removeItem('auth_redirect');
-          navigate(decodeURIComponent(storedRedirect));
+          sessionStorage.removeItem('auth_redirect');
+          // Use replace to avoid back button issues
+          window.location.replace(decodeURIComponent(storedRedirect));
         } else if (redirectTo) {
-          navigate(decodeURIComponent(redirectTo));
+          window.location.replace(decodeURIComponent(redirectTo));
         } else {
           navigate("/");
         }
@@ -57,9 +59,9 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Store redirect URL in localStorage to handle after OAuth
+      // Store redirect URL in sessionStorage (better for OAuth on mobile)
       if (redirectTo) {
-        localStorage.setItem('auth_redirect', redirectTo);
+        sessionStorage.setItem('auth_redirect', redirectTo);
       }
       
       const { error } = await supabase.auth.signInWithOAuth({
