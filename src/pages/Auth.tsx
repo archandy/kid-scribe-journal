@@ -15,19 +15,39 @@ export default function Auth() {
   const redirectTo = searchParams.get('redirectTo');
 
   useEffect(() => {
-    // Check if already logged in
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      // Check for stored redirect from OAuth flow
+      const storedRedirect = localStorage.getItem('auth_redirect');
+      
       if (session) {
-        navigate(redirectTo || "/");
+        if (storedRedirect) {
+          localStorage.removeItem('auth_redirect');
+          navigate(decodeURIComponent(storedRedirect));
+        } else if (redirectTo) {
+          navigate(decodeURIComponent(redirectTo));
+        } else {
+          navigate("/");
+        }
       }
     };
+    
     checkSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate(redirectTo || "/");
+      if (event === 'SIGNED_IN' && session) {
+        const storedRedirect = localStorage.getItem('auth_redirect');
+        
+        if (storedRedirect) {
+          localStorage.removeItem('auth_redirect');
+          navigate(decodeURIComponent(storedRedirect));
+        } else if (redirectTo) {
+          navigate(decodeURIComponent(redirectTo));
+        } else {
+          navigate("/");
+        }
       }
     });
 
@@ -37,11 +57,15 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const finalRedirect = redirectTo || '/';
+      // Store redirect URL in localStorage to handle after OAuth
+      if (redirectTo) {
+        localStorage.setItem('auth_redirect', redirectTo);
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${finalRedirect}`,
+          redirectTo: `${window.location.origin}/auth`,
         },
       });
 
