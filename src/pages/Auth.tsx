@@ -12,7 +12,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
-  const redirectTo = searchParams.get('redirect');
+  const redirectTo = searchParams.get('redirectTo');
 
   useEffect(() => {
     // Check if already logged in

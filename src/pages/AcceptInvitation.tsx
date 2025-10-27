@@ -17,26 +17,37 @@ export default function AcceptInvitation() {
   const token = searchParams.get("token");
 
   useEffect(() => {
-    checkAuthAndToken();
-  }, [token]);
-
-  const checkAuthAndToken = async () => {
-    if (!token) {
-      setError("Invalid invitation link");
-      setIsLoading(false);
-      return;
-    }
-
-    const { data: { session } } = await supabase.auth.getSession();
+    let mounted = true;
     
-    if (!session) {
-      // Redirect to auth page with return URL
-      navigate(`/auth?redirect=/accept-invitation?token=${token}`);
-      return;
-    }
+    const checkAuthAndToken = async () => {
+      if (!token) {
+        if (mounted) {
+          setError("Invalid invitation link");
+          setIsLoading(false);
+        }
+        return;
+      }
 
-    setIsLoading(false);
-  };
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!mounted) return;
+
+      if (!session) {
+        // Redirect to auth page with return URL
+        const redirectUrl = encodeURIComponent(`/accept-invitation?token=${token}`);
+        navigate(`/auth?redirectTo=${redirectUrl}`);
+        return;
+      }
+
+      setIsLoading(false);
+    };
+
+    checkAuthAndToken();
+
+    return () => {
+      mounted = false;
+    };
+  }, [token, navigate]);
 
   const handleAcceptInvitation = async () => {
     if (!token) return;
@@ -47,7 +58,8 @@ export default function AcceptInvitation() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate(`/auth?redirect=/accept-invitation?token=${token}`);
+        const redirectUrl = encodeURIComponent(`/accept-invitation?token=${token}`);
+        navigate(`/auth?redirectTo=${redirectUrl}`);
         return;
       }
 
