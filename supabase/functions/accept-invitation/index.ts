@@ -20,24 +20,20 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const jwtToken = authHeader.replace('Bearer ', '');
     
-    // Create client for authentication check (using anon key with JWT in headers)
+    // Create client for authentication check
     const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-        auth: { persistSession: false }
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Get the authenticated user
+    // Get the authenticated user using the JWT token
     const {
       data: { user },
       error: authError,
-    } = await authClient.auth.getUser();
+    } = await authClient.auth.getUser(jwtToken);
 
     if (authError || !user) {
       console.error('Auth error:', authError);
