@@ -18,19 +18,11 @@ export default function Auth() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Check for stored redirect from OAuth flow (use sessionStorage for mobile compatibility)
-      const storedRedirect = sessionStorage.getItem('auth_redirect');
-      
-      if (session) {
-        if (storedRedirect) {
-          sessionStorage.removeItem('auth_redirect');
-          // Use replace instead of navigate to avoid back button issues
-          window.location.replace(decodeURIComponent(storedRedirect));
-        } else if (redirectTo) {
-          window.location.replace(decodeURIComponent(redirectTo));
-        } else {
-          navigate("/");
-        }
+      if (session && redirectTo) {
+        // User is already signed in, redirect immediately
+        window.location.href = decodeURIComponent(redirectTo);
+      } else if (session) {
+        navigate("/");
       }
     };
     
@@ -39,14 +31,8 @@ export default function Auth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        const storedRedirect = sessionStorage.getItem('auth_redirect');
-        
-        if (storedRedirect) {
-          sessionStorage.removeItem('auth_redirect');
-          // Use replace to avoid back button issues
-          window.location.replace(decodeURIComponent(storedRedirect));
-        } else if (redirectTo) {
-          window.location.replace(decodeURIComponent(redirectTo));
+        if (redirectTo) {
+          window.location.href = decodeURIComponent(redirectTo);
         } else {
           navigate("/");
         }
@@ -59,15 +45,15 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Store redirect URL in sessionStorage (better for OAuth on mobile)
-      if (redirectTo) {
-        sessionStorage.setItem('auth_redirect', redirectTo);
-      }
+      // Build the OAuth redirect URL with the redirectTo parameter preserved
+      const authRedirectUrl = redirectTo 
+        ? `${window.location.origin}/auth?redirectTo=${redirectTo}`
+        : `${window.location.origin}/auth`;
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: authRedirectUrl,
         },
       });
 
