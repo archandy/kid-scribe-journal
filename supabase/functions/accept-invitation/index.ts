@@ -15,6 +15,7 @@ serve(async (req) => {
     // Get the JWT token from Authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -23,25 +24,34 @@ serve(async (req) => {
 
     const jwtToken = authHeader.replace('Bearer ', '');
     
-    // Create client for authentication check
+    // Create client for authentication check with the JWT token
     const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
     );
 
     // Get the authenticated user using the JWT token
     const {
       data: { user },
       error: authError,
-    } = await authClient.auth.getUser(jwtToken);
+    } = await authClient.auth.getUser();
 
     if (authError || !user) {
       console.error('Auth error:', authError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('Authenticated user:', user.email);
 
     // Create admin client for database operations (using service role key)
     const supabaseClient = createClient(
