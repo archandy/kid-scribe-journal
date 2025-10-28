@@ -67,32 +67,24 @@ export default function AcceptInvitation() {
       console.log('Session user:', session.user.email);
       console.log('Access token present:', !!session.access_token);
 
-      const { data, error } = await supabase.functions.invoke('accept-invitation', {
-        body: { token },
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Function response:', { data, error });
-
-      if (error) {
-        console.error('Function invocation error:', error);
-        
-        // Try to extract error message from response
-        let errorMessage = "Failed to accept invitation";
-        if (error.context) {
-          try {
-            const responseData = await error.context.json();
-            errorMessage = responseData.error || errorMessage;
-          } catch (e) {
-            console.error('Could not parse error response:', e);
-          }
+      const response = await fetch(
+        `https://yasedaxyeogpnhiaqvpk.supabase.co/functions/v1/accept-invitation`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
         }
-        
+      );
+
+      const data = await response.json();
+      console.log('Function response:', { data, status: response.status });
+
+      if (!response.ok) {
+        const errorMessage = data.error || "Failed to accept invitation";
         setError(errorMessage);
         toast({
           title: "Error",
@@ -102,7 +94,7 @@ export default function AcceptInvitation() {
         return;
       }
 
-      if (data?.error) {
+      if (data.error) {
         setError(data.error);
         toast({
           title: "Error",
