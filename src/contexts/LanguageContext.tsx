@@ -24,6 +24,7 @@ const translations: Record<Language, Record<string, string>> = {
     'record.prompt2': 'Its details',
     'record.tapToStart': 'Tap to start recording your first response',
     'record.tapToContinue': 'Tap to continue to the next question',
+    'record.step2Tip': 'When recording your child\'s moment, try to include what happened, how they reacted, and what that might show about their personality or growth',
     
     // Review Sheet
     'review.title': 'Review & Save',
@@ -197,6 +198,7 @@ const translations: Record<Language, Record<string, string>> = {
     'record.prompt2': 'その詳細',
     'record.tapToStart': 'タップして最初の回答を録音',
     'record.tapToContinue': 'タップして次の質問に進む',
+    'record.step2Tip': 'お子様の瞬間を記録するときは、何が起こったか、どのように反応したか、それが性格や成長について何を示しているかを含めてみてください',
     
     // Review Sheet
     'review.title': '確認と保存',
@@ -370,6 +372,7 @@ const translations: Record<Language, Record<string, string>> = {
     'record.prompt2': '그 세부사항',
     'record.tapToStart': '첫 번째 응답을 녹음하려면 탭하세요',
     'record.tapToContinue': '다음 질문으로 넘어가려면 탭하세요',
+    'record.step2Tip': '자녀의 순간을 기록할 때는 무슨 일이 있었는지, 어떻게 반응했는지, 그것이 성격이나 성장에 대해 무엇을 보여주는지 포함해 보세요',
     
     // Review Sheet
     'review.title': '검토 및 저장',

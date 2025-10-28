@@ -497,6 +497,11 @@ const Record = () => {
           <h2 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
             {PROMPTS[currentStep]}
           </h2>
+          {currentStep === 1 && (
+            <p className="text-sm text-muted-foreground/80 italic max-w-md mx-auto mt-2">
+              💡 {t('record.step2Tip')}
+            </p>
+          )}
         </div>
 
         {/* Waveform Canvas - only show on desktop */}
