@@ -76,28 +76,13 @@ const Children = () => {
 
       if (error) throw error;
       
-      // Generate signed URLs for photos or use public URLs
-      const childrenWithSignedUrls = await Promise.all(
-        (data || []).map(async (child) => {
-          if (child.photo_url) {
-            // If photo_url is a full URL, extract the path
-            let photoPath = child.photo_url;
-            if (photoPath.includes('/storage/v1/object/public/child-photos/')) {
-              photoPath = photoPath.split('/storage/v1/object/public/child-photos/')[1];
-            }
-            
-            // Try to get public URL first
-            const { data: publicUrlData } = supabase.storage
-              .from("child-photos")
-              .getPublicUrl(photoPath);
-            
-            if (publicUrlData?.publicUrl) {
-              return { ...child, signedPhotoUrl: publicUrlData.publicUrl };
-            }
-          }
-          return child;
-        })
-      );
+      // Use photo URLs directly if they're already full URLs
+      const childrenWithSignedUrls = (data || []).map((child) => {
+        if (child.photo_url) {
+          return { ...child, signedPhotoUrl: child.photo_url };
+        }
+        return child;
+      });
       
       setChildren(childrenWithSignedUrls);
     } catch (error) {
