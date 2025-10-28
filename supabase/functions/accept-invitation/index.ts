@@ -42,9 +42,12 @@ serve(async (req) => {
     console.log("Authenticated user:", user.email);
 
     // 3) Admin client for DB ops
+    console.log("Creating admin client...");
     const admin = createClient(supabaseUrl, serviceKey);
+    console.log("Admin client created");
 
     // 4) Read body
+    console.log("Reading request body...");
     let body: any = {};
     try { 
       body = await req.json(); 
@@ -60,6 +63,7 @@ serve(async (req) => {
     }
 
     // 5) Invitation lookup
+    console.log("Looking up invitation with token:", token);
     const { data: invitation, error: invitationError } = await admin
       .from("family_invitations")
       .select("*")
