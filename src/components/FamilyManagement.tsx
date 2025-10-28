@@ -58,6 +58,7 @@ export default function FamilyManagement() {
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,11 +73,14 @@ export default function FamilyManagement() {
 
       const { data: myFamily } = await supabase
         .from('family_members')
-        .select('family_id')
+        .select('family_id, role')
         .eq('user_id', user.id)
         .single();
 
       if (!myFamily) return;
+
+      // Store current user's role
+      setCurrentUserRole(myFamily.role);
 
       const { data: membersData, error: membersError } = await supabase
         .from('family_members')
@@ -242,6 +246,16 @@ export default function FamilyManagement() {
   const handleUpdateLabel = async () => {
     if (!editingMemberId) return;
 
+    // Check if user is owner
+    if (currentUserRole !== 'owner') {
+      toast({
+        title: "Permission denied",
+        description: "Only the family owner can edit labels",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('family_members')
@@ -269,6 +283,15 @@ export default function FamilyManagement() {
   };
 
   const openEditLabel = (member: FamilyMember) => {
+    // Only owners can edit labels
+    if (currentUserRole !== 'owner') {
+      toast({
+        title: "Permission denied",
+        description: "Only the family owner can edit labels",
+        variant: "destructive",
+      });
+      return;
+    }
     setEditingMemberId(member.id);
     setEditingLabel(member.label || "");
   };
@@ -423,14 +446,16 @@ export default function FamilyManagement() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditLabel(member)}
-                    title="Edit label"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  {currentUserRole === 'owner' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditLabel(member)}
+                      title="Edit label"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
                   {getRoleBadge(member.role)}
                 </div>
               </div>
