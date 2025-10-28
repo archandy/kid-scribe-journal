@@ -46,9 +46,16 @@ serve(async (req) => {
 
     // 4) Read body
     let body: any = {};
-    try { body = await req.json(); } catch {}
+    try { 
+      body = await req.json(); 
+      console.log("Request body:", body);
+    } catch (e) {
+      console.error("Failed to parse body:", e);
+    }
     const token: string | undefined = body?.token;
+    console.log("Token from body:", token);
     if (!token) {
+      console.error("Missing token in request body");
       return new Response(JSON.stringify({ error: "Token is required" }), { status: 400, headers: corsHeaders });
     }
 
