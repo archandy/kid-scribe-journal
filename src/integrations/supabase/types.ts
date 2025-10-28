@@ -294,14 +294,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_oauth_states: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_user_family_id: {
-        Args: { _user_id: string }
-        Returns: string
-      }
+      cleanup_expired_oauth_states: { Args: never; Returns: undefined }
+      get_user_family_id: { Args: { _user_id: string }; Returns: string }
       is_family_admin: {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
