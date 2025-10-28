@@ -125,6 +125,7 @@ export type Database = {
           family_id: string
           id: string
           joined_at: string
+          label: string | null
           role: Database["public"]["Enums"]["family_role"]
           user_id: string
         }
@@ -132,6 +133,7 @@ export type Database = {
           family_id: string
           id?: string
           joined_at?: string
+          label?: string | null
           role?: Database["public"]["Enums"]["family_role"]
           user_id: string
         }
@@ -139,6 +141,7 @@ export type Database = {
           family_id?: string
           id?: string
           joined_at?: string
+          label?: string | null
           role?: Database["public"]["Enums"]["family_role"]
           user_id?: string
         }
@@ -264,6 +267,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
@@ -272,6 +276,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -280,6 +285,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null

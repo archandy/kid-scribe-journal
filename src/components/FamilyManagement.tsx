@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Mail, Copy, Trash2, Shield, Crown } from "lucide-react";
+import { Users, Mail, Copy, Trash2, Shield, Crown, Pencil, User } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,15 +17,26 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface FamilyMember {
   id: string;
   user_id: string;
   role: 'owner' | 'admin' | 'member';
   joined_at: string;
+  label?: string | null;
   profiles: {
     email: string;
     full_name: string | null;
+    avatar_url?: string | null;
   };
 }
 
@@ -44,6 +56,8 @@ export default function FamilyManagement() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [invitationToCancel, setInvitationToCancel] = useState<string | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -70,7 +84,8 @@ export default function FamilyManagement() {
           id,
           user_id,
           role,
-          joined_at
+          joined_at,
+          label
         `)
         .eq('family_id', myFamily.family_id)
         .order('joined_at', { ascending: true });
@@ -81,13 +96,13 @@ export default function FamilyManagement() {
       const userIds = membersData?.map(m => m.user_id) || [];
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
+        .select('id, email, full_name, avatar_url')
         .in('id', userIds);
 
       // Merge members with profiles
       const membersWithProfiles = membersData?.map(member => ({
         ...member,
-        profiles: profilesData?.find(p => p.id === member.user_id) || { email: '', full_name: null }
+        profiles: profilesData?.find(p => p.id === member.user_id) || { email: '', full_name: null, avatar_url: null }
       })) || [];
 
       setMembers(membersWithProfiles);
@@ -224,6 +239,40 @@ export default function FamilyManagement() {
     }
   };
 
+  const handleUpdateLabel = async () => {
+    if (!editingMemberId) return;
+
+    try {
+      const { error } = await supabase
+        .from('family_members')
+        .update({ label: editingLabel || null })
+        .eq('id', editingMemberId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Label updated",
+        description: "Family member label has been updated",
+      });
+
+      fetchFamilyData();
+      setEditingMemberId(null);
+      setEditingLabel("");
+    } catch (error: any) {
+      console.error('Error updating label:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update label",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openEditLabel = (member: FamilyMember) => {
+    setEditingMemberId(member.id);
+    setEditingLabel(member.label || "");
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -348,15 +397,42 @@ export default function FamilyManagement() {
                 key={member.id}
                 className="flex items-center justify-between p-3 border rounded-lg"
               >
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {member.profiles?.full_name || member.profiles?.email}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {member.profiles?.email}
-                  </p>
+                <div className="flex items-center gap-3 flex-1">
+                  <Avatar className="h-10 w-10">
+                    {member.profiles?.avatar_url ? (
+                      <AvatarImage src={member.profiles.avatar_url} alt={member.profiles.full_name || ''} />
+                    ) : null}
+                    <AvatarFallback>
+                      <User className="h-5 w-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {member.profiles?.full_name || member.profiles?.email}
+                      </p>
+                      {member.label && (
+                        <Badge variant="outline" className="text-xs">
+                          {member.label}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {member.profiles?.email}
+                    </p>
+                  </div>
                 </div>
-                {getRoleBadge(member.role)}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditLabel(member)}
+                    title="Edit label"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {getRoleBadge(member.role)}
+                </div>
               </div>
             ))}
           </div>
@@ -382,6 +458,36 @@ export default function FamilyManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editingMemberId} onOpenChange={() => setEditingMemberId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Member Label</DialogTitle>
+            <DialogDescription>
+              Add a label to identify this family member's relationship (e.g., Mom, Dad, Grandma, Uncle)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="label">Label</Label>
+              <Input
+                id="label"
+                value={editingLabel}
+                onChange={(e) => setEditingLabel(e.target.value)}
+                placeholder="e.g., Mom, Dad, Aunt"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMemberId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateLabel}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
