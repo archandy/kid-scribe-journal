@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Users, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AcceptInvitation() {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -22,7 +24,7 @@ export default function AcceptInvitation() {
     const checkAuthAndToken = async () => {
       if (!token) {
         if (mounted) {
-          setError("Invalid invitation link");
+          setError(t('invite.invalidLink'));
           setIsLoading(false);
         }
         return;
@@ -106,8 +108,8 @@ export default function AcceptInvitation() {
 
       setSuccess(true);
       toast({
-        title: "Success!",
-        description: "You've joined the family! Redirecting...",
+        title: t('invite.success'),
+        description: t('invite.successDesc'),
       });
 
       setTimeout(() => {
@@ -134,7 +136,7 @@ export default function AcceptInvitation() {
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading invitation...</p>
+            <p className="text-muted-foreground">{t('invite.loading')}</p>
           </CardContent>
         </Card>
       </div>
@@ -149,9 +151,9 @@ export default function AcceptInvitation() {
             <div className="flex justify-center mb-4">
               <CheckCircle2 className="h-16 w-16 text-green-500" />
             </div>
-            <CardTitle className="text-2xl">Welcome to the Family!</CardTitle>
+            <CardTitle className="text-2xl">{t('invite.welcomeTitle')}</CardTitle>
             <CardDescription>
-              You've successfully joined. Redirecting you to the app...
+              {t('invite.welcomeDesc')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -167,14 +169,14 @@ export default function AcceptInvitation() {
             <div className="flex justify-center mb-4">
               <XCircle className="h-16 w-16 text-destructive" />
             </div>
-            <CardTitle className="text-2xl">Unable to Accept Invitation</CardTitle>
+            <CardTitle className="text-2xl">{t('invite.errorTitle')}</CardTitle>
             <CardDescription className="text-destructive mt-2">
               {error}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button onClick={() => navigate('/')}>
-              Go to Home
+              {t('invite.goHome')}
             </Button>
           </CardContent>
         </Card>
@@ -189,9 +191,9 @@ export default function AcceptInvitation() {
           <div className="flex justify-center mb-4">
             <Users className="h-16 w-16 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Join Family</CardTitle>
+          <CardTitle className="text-2xl">{t('invite.joinTitle')}</CardTitle>
           <CardDescription>
-            You've been invited to join a family. Click the button below to accept the invitation and start collaborating.
+            {t('invite.joinDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center gap-3">
@@ -200,7 +202,7 @@ export default function AcceptInvitation() {
             onClick={() => navigate('/')}
             disabled={isAccepting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleAcceptInvitation}
@@ -209,10 +211,10 @@ export default function AcceptInvitation() {
             {isAccepting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Accepting...
+                {t('invite.accepting')}
               </>
             ) : (
-              "Accept Invitation"
+              t('invite.accept')
             )}
           </Button>
         </CardContent>

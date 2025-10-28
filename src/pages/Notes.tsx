@@ -58,10 +58,10 @@ const Notes = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              Past Notes
+              {t('notes.title')}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              View your saved notes and memories
+              {t('notes.subtitle')}
             </p>
           </div>
         </div>
@@ -76,7 +76,7 @@ const Notes = () => {
         ) : (
           <Tabs value={selectedChild} onValueChange={setSelectedChild} className="w-full">
             <TabsList className="mb-6">
-              <TabsTrigger value="all">All Children</TabsTrigger>
+              <TabsTrigger value="all">{t('notes.allChildren')}</TabsTrigger>
               {children.map((child) => (
                 <TabsTrigger key={child.id} value={child.id}>
                   {child.name}

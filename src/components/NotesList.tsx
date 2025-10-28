@@ -147,7 +147,7 @@ const NotesList = ({ childId }: NotesListProps = {}) => {
   if (notes.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No notes yet. Start recording to capture your first moment!</p>
+        <p className="text-muted-foreground">{t('notes.noNotes')}</p>
       </div>
     );
   }
@@ -204,21 +204,21 @@ const NotesList = ({ childId }: NotesListProps = {}) => {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Note</AlertDialogTitle>
+            <AlertDialogTitle>{t('notes.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this note? This action cannot be undone.
+              {t('notes.deleteDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  {t('common.deleting')}
                 </>
               ) : (
-                'Delete'
+                t('common.delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

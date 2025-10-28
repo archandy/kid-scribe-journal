@@ -24,7 +24,7 @@ interface BehaviorSummaryProps {
 const BehaviorSummary = ({ childId }: BehaviorSummaryProps = {}) => {
   const [analysis, setAnalysis] = useState<BehaviorAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     fetchBehaviorAnalysis();
@@ -76,7 +76,7 @@ const BehaviorSummary = ({ childId }: BehaviorSummaryProps = {}) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          Behavior Insights
+          {t('insights.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -84,7 +84,7 @@ const BehaviorSummary = ({ childId }: BehaviorSummaryProps = {}) => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
             <TrendingUp className="h-4 w-4" />
-            Overall Behavior Patterns
+            {t('insights.patterns')}
           </div>
           {analysis.childSummaries.map((child, index) => (
             <div key={index} className="space-y-2">
@@ -100,7 +100,7 @@ const BehaviorSummary = ({ childId }: BehaviorSummaryProps = {}) => {
         {analysis.topHashtags.length > 0 && (
           <div className="space-y-3">
             <div className="text-sm font-semibold text-muted-foreground">
-              Top Behavioral Themes
+              {t('insights.themes')}
             </div>
             <div className="flex flex-wrap gap-2">
               {analysis.topHashtags.map((tag, index) => (
@@ -121,7 +121,7 @@ const BehaviorSummary = ({ childId }: BehaviorSummaryProps = {}) => {
           <div className="space-y-3 rounded-lg bg-card/50 p-4 border border-primary/10">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <MessageCircle className="h-4 w-4" />
-              Encouragement for Your Child
+              {t('insights.encouragement')}
             </div>
             <p className="text-sm font-medium text-foreground leading-relaxed italic">
               "{analysis.encouragement}"

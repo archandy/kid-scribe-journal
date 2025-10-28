@@ -239,7 +239,7 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
                       onClick={() => document.getElementById("photo-upload")?.click()}
                     >
                       <Upload className="h-4 w-4 mr-2" />
-                      {isUploading ? "Uploading..." : "Upload Photo"}
+                      {isUploading ? t('form.uploading') : t('form.uploadPhoto')}
                     </Button>
                     {photoUrl && (
                       <Button
@@ -249,7 +249,7 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
                         onClick={handleRemovePhoto}
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Remove
+                        {t('form.remove')}
                       </Button>
                     )}
                   </div>
@@ -294,7 +294,7 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
                     onValueChange={(value) => handleDateChange('year', value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Year" />
+                      <SelectValue placeholder={t('form.year')} />
                     </SelectTrigger>
                     <SelectContent>
                       {years.map((year) => (
@@ -311,7 +311,7 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
                     onValueChange={(value) => handleDateChange('month', value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Month" />
+                      <SelectValue placeholder={t('form.month')} />
                     </SelectTrigger>
                     <SelectContent>
                       {months.map((month) => (
@@ -328,7 +328,7 @@ export const ChildForm = ({ initialData, onSubmit, onCancel }: ChildFormProps) =
                     onValueChange={(value) => handleDateChange('day', value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Day" />
+                      <SelectValue placeholder={t('form.day')} />
                     </SelectTrigger>
                     <SelectContent>
                       {days.map((day) => (

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Mail, Copy, Trash2, Shield, Crown, Pencil, User } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +61,7 @@ export default function FamilyManagement() {
   const [editingLabel, setEditingLabel] = useState("");
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchFamilyData();
@@ -135,8 +137,8 @@ export default function FamilyManagement() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
-          title: "Error",
-          description: "You must be logged in to send invitations",
+          title: t('invite.errorDesc'),
+          description: t('invite.mustLogin'),
           variant: "destructive",
         });
         setIsLoading(false);
@@ -168,8 +170,8 @@ export default function FamilyManagement() {
       if (!data?.invitationLink) {
         console.error('No invitation link in response:', data);
         toast({
-          title: "Error",
-          description: "Failed to generate invitation link",
+          title: t('invite.errorDesc'),
+          description: t('family.inviteLinkError'),
           variant: "destructive",
         });
         return;
@@ -180,15 +182,15 @@ export default function FamilyManagement() {
       await fetchFamilyData();
 
       toast({
-        title: "Invitation link generated!",
-        description: "Share this link with your family member.",
+        title: t('family.inviteLinkGen'),
+        description: t('family.inviteLinkGenDesc'),
       });
 
     } catch (error: any) {
       console.error('Error sending invitation:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send invitation",
+        title: t('invite.errorDesc'),
+        description: error.message || t('family.inviteError'),
         variant: "destructive",
       });
     } finally {
@@ -200,8 +202,8 @@ export default function FamilyManagement() {
     const link = `${window.location.origin}/accept-invitation?token=${token}`;
     await navigator.clipboard.writeText(link);
     toast({
-      title: "Link copied!",
-      description: "Invitation link has been copied to your clipboard",
+      title: t('family.copied'),
+      description: t('family.linkCopied'),
     });
   };
 
@@ -215,16 +217,16 @@ export default function FamilyManagement() {
       if (error) throw error;
 
       toast({
-        title: "Invitation cancelled",
-        description: "The invitation has been cancelled",
+        title: t('family.inviteCancelled'),
+        description: t('family.inviteCancelledDesc'),
       });
 
       fetchFamilyData();
     } catch (error: any) {
       console.error('Error cancelling invitation:', error);
       toast({
-        title: "Error",
-        description: "Failed to cancel invitation",
+        title: t('invite.errorDesc'),
+        description: t('family.inviteCancelError'),
         variant: "destructive",
       });
     } finally {
@@ -235,11 +237,11 @@ export default function FamilyManagement() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'owner':
-        return <Badge variant="default" className="gap-1"><Crown className="h-3 w-3" /> Owner</Badge>;
+        return <Badge variant="default" className="gap-1"><Crown className="h-3 w-3" /> {t('family.owner')}</Badge>;
       case 'admin':
-        return <Badge variant="secondary" className="gap-1"><Shield className="h-3 w-3" /> Admin</Badge>;
+        return <Badge variant="secondary" className="gap-1"><Shield className="h-3 w-3" /> {t('family.admin')}</Badge>;
       default:
-        return <Badge variant="outline">Member</Badge>;
+        return <Badge variant="outline">{t('family.member')}</Badge>;
     }
   };
 
@@ -249,8 +251,8 @@ export default function FamilyManagement() {
     // Check if user is owner
     if (currentUserRole !== 'owner') {
       toast({
-        title: "Permission denied",
-        description: "Only the family owner can edit labels",
+        title: t('family.permissionDenied'),
+        description: t('family.onlyOwner'),
         variant: "destructive",
       });
       return;
@@ -265,8 +267,8 @@ export default function FamilyManagement() {
       if (error) throw error;
 
       toast({
-        title: "Label updated",
-        description: "Family member label has been updated",
+        title: t('family.labelUpdated'),
+        description: t('family.labelUpdateSuccess'),
       });
 
       fetchFamilyData();
@@ -275,8 +277,8 @@ export default function FamilyManagement() {
     } catch (error: any) {
       console.error('Error updating label:', error);
       toast({
-        title: "Error",
-        description: "Failed to update label",
+        title: t('invite.errorDesc'),
+        description: t('family.labelUpdateError'),
         variant: "destructive",
       });
     }
@@ -286,8 +288,8 @@ export default function FamilyManagement() {
     // Only owners can edit labels
     if (currentUserRole !== 'owner') {
       toast({
-        title: "Permission denied",
-        description: "Only the family owner can edit labels",
+        title: t('family.permissionDenied'),
+        description: t('family.onlyOwner'),
         variant: "destructive",
       });
       return;
@@ -302,10 +304,10 @@ export default function FamilyManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            Invite Family Member
+            {t('family.inviteTitle')}
           </CardTitle>
           <CardDescription>
-            Create an invitation link to share with another parent or guardian
+            {t('family.inviteDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -313,20 +315,20 @@ export default function FamilyManagement() {
             <div className="flex gap-2">
               <Input
                 type="email"
-                placeholder="Enter email address"
+                placeholder={t('family.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
               />
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Generating..." : "Generate Link"}
+                {isLoading ? t('family.generating') : t('family.generateLink')}
               </Button>
             </div>
             
             {generatedLink && (
               <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
-                <p className="text-sm font-medium">Invitation Link:</p>
+                <p className="text-sm font-medium">{t('family.invitationLink')}</p>
                 <div className="flex gap-2">
                   <Input
                     value={generatedLink}
@@ -340,8 +342,8 @@ export default function FamilyManagement() {
                     onClick={async () => {
                       await navigator.clipboard.writeText(generatedLink);
                       toast({
-                        title: "Copied!",
-                        description: "Link copied to clipboard",
+                        title: t('family.copied'),
+                        description: t('family.linkCopied'),
                       });
                     }}
                   >
@@ -349,7 +351,7 @@ export default function FamilyManagement() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Share this link with the person you want to invite. They can use it to join your family.
+                  {t('family.shareInstructions')}
                 </p>
               </div>
             )}
@@ -360,9 +362,9 @@ export default function FamilyManagement() {
       {invitations.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
+            <CardTitle>{t('family.pendingTitle')}</CardTitle>
             <CardDescription>
-              Invitations waiting to be accepted
+              {t('family.pendingDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -375,7 +377,7 @@ export default function FamilyManagement() {
                   <div className="flex-1">
                     <p className="font-medium">{invitation.email}</p>
                     <p className="text-sm text-muted-foreground">
-                      Sent {new Date(invitation.created_at).toLocaleDateString()}
+                      {t('family.sent')} {new Date(invitation.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -383,7 +385,7 @@ export default function FamilyManagement() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleCopyInvitationLink(invitation.token)}
-                      title="Copy invitation link"
+                      title={t('family.copyLink')}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -391,7 +393,7 @@ export default function FamilyManagement() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setInvitationToCancel(invitation.id)}
-                      title="Cancel invitation"
+                      title={t('family.cancelInvite')}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -407,10 +409,10 @@ export default function FamilyManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Family Members
+            {t('family.membersTitle')}
           </CardTitle>
           <CardDescription>
-            People who can access and edit your family's data
+            {t('family.membersDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -451,7 +453,7 @@ export default function FamilyManagement() {
                       variant="ghost"
                       size="icon"
                       onClick={() => openEditLabel(member)}
-                      title="Edit label"
+                      title={t('family.editLabel')}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -467,18 +469,18 @@ export default function FamilyManagement() {
       <AlertDialog open={!!invitationToCancel} onOpenChange={() => setInvitationToCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
+            <AlertDialogTitle>{t('family.cancelInviteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel this invitation? The recipient will no longer be able to use this invitation link.
+              {t('family.cancelInviteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No, keep it</AlertDialogCancel>
+            <AlertDialogCancel>{t('family.keepIt')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => invitationToCancel && handleCancelInvitation(invitationToCancel)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Yes, cancel it
+              {t('family.cancelIt')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -487,28 +489,28 @@ export default function FamilyManagement() {
       <Dialog open={!!editingMemberId} onOpenChange={() => setEditingMemberId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Member Label</DialogTitle>
+            <DialogTitle>{t('family.editLabelTitle')}</DialogTitle>
             <DialogDescription>
-              Add a label to identify this family member's relationship (e.g., Mom, Dad, Grandma, Uncle)
+              {t('family.editLabelDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="label">Label</Label>
+              <Label htmlFor="label">{t('family.label')}</Label>
               <Input
                 id="label"
                 value={editingLabel}
                 onChange={(e) => setEditingLabel(e.target.value)}
-                placeholder="e.g., Mom, Dad, Aunt"
+                placeholder={t('family.labelPlaceholder')}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingMemberId(null)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleUpdateLabel}>
-              Save
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
