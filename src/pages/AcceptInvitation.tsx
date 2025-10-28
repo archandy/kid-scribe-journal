@@ -68,6 +68,9 @@ export default function AcceptInvitation() {
 
       const { data, error } = await supabase.functions.invoke('accept-invitation', {
         body: { token },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       console.log('Function response:', { data, error });
