@@ -24,24 +24,17 @@ serve(async (req) => {
 
     const jwtToken = authHeader.replace('Bearer ', '');
     
-    // Create client for authentication check with the JWT token
+    // Create client for authentication check
     const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Get the authenticated user using the JWT token
+    // Get the authenticated user by passing the JWT token directly
     const {
       data: { user },
       error: authError,
-    } = await authClient.auth.getUser();
+    } = await authClient.auth.getUser(jwtToken);
 
     if (authError || !user) {
       console.error('Auth error:', authError);
