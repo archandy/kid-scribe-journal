@@ -80,10 +80,28 @@ export default function AcceptInvitation() {
 
       if (error) {
         console.error('Function invocation error:', error);
-        throw error;
+        
+        // Try to extract error message from response
+        let errorMessage = "Failed to accept invitation";
+        if (error.context) {
+          try {
+            const responseData = await error.context.json();
+            errorMessage = responseData.error || errorMessage;
+          } catch (e) {
+            console.error('Could not parse error response:', e);
+          }
+        }
+        
+        setError(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (data.error) {
+      if (data?.error) {
         setError(data.error);
         toast({
           title: "Error",
