@@ -65,11 +65,14 @@ export default function AcceptInvitation() {
 
       console.log('Calling accept-invitation with token:', token);
       console.log('Session user:', session.user.email);
+      console.log('Access token present:', !!session.access_token);
 
       const { data, error } = await supabase.functions.invoke('accept-invitation', {
         body: { token },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Content-Type': 'application/json',
         },
       });
 
