@@ -93,7 +93,7 @@ export default function Drawings() {
           )
         `)
         .eq("family_id", familyData.family_id)
-        .order("photo_date", { ascending: false });
+        .order("photo_date", { ascending: false, nullsFirst: false });
 
       // Generate signed URLs for each drawing's child photo
       if (drawingsData) {
