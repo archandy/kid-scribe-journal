@@ -662,9 +662,8 @@ export default function Drawings() {
 
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
-              <Upload className="mr-2 h-4 w-4" />
-              {t("drawings.upload")}
+            <Button size="icon" variant="default">
+              <Upload className="h-5 w-5" />
             </Button>
           </DialogTrigger>
                 <DialogContent className="max-w-md">
@@ -906,23 +905,17 @@ export default function Drawings() {
                     {/* Download button */}
                     <button
                       onClick={() => handleDownload(fullScreenImage)}
-                      className="w-full px-6 py-4 flex items-center justify-between border-b border-border/50 hover:bg-black/5 transition-colors"
+                      className="w-full px-6 py-5 flex items-center justify-center border-b border-border/50 hover:bg-black/5 transition-colors"
                     >
-                      <span className="text-xl font-medium text-foreground" style={{ fontFamily: 'serif' }}>
-                        Download
-                      </span>
-                      <Download className="h-6 w-6 text-foreground" />
+                      <Download className="h-7 w-7 text-foreground" />
                     </button>
                     
                     {/* Delete button */}
                     <button
                       onClick={() => handleDelete(fullScreenImage)}
-                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-black/5 transition-colors"
+                      className="w-full px-6 py-5 flex items-center justify-center hover:bg-black/5 transition-colors"
                     >
-                      <span className="text-xl font-medium text-foreground" style={{ fontFamily: 'serif' }}>
-                        Delete
-                      </span>
-                      <Trash2 className="h-6 w-6 text-foreground" />
+                      <Trash2 className="h-7 w-7 text-destructive" />
                     </button>
                   </div>
                 </>
@@ -936,11 +929,14 @@ export default function Drawings() {
           <div className="fixed bottom-6 right-6 z-50">
             <Button 
               variant="destructive" 
+              size="lg"
               onClick={handleBulkDelete}
-              className="gap-2"
+              className="relative rounded-full h-14 w-14 p-0"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete ({selectedDrawings.length})
+              <Trash2 className="h-6 w-6" />
+              <span className="absolute -top-1 -right-1 bg-background text-destructive text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-destructive">
+                {selectedDrawings.length}
+              </span>
             </Button>
           </div>
         )}
