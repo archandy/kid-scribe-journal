@@ -10,7 +10,7 @@ import { Upload, Home, Check, Trash2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import EXIF from "exif-js";
+import * as exifr from "exifr";
 
 interface Child {
   id: string;
@@ -240,40 +240,30 @@ export default function Drawings() {
     });
   };
 
-  const extractPhotoDate = (file: File): Promise<Date | null> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const tags = EXIF.readFromBinaryFile(arrayBuffer);
-          
-          if (tags && tags.DateTimeOriginal) {
-            // EXIF date format: "YYYY:MM:DD HH:MM:SS"
-            const dateTimeOriginal = tags.DateTimeOriginal;
-            const parts = dateTimeOriginal.split(" ");
-            const dateParts = parts[0].split(":");
-            const timeParts = parts[1].split(":");
-            const date = new Date(
-              parseInt(dateParts[0]),
-              parseInt(dateParts[1]) - 1,
-              parseInt(dateParts[2]),
-              parseInt(timeParts[0]),
-              parseInt(timeParts[1]),
-              parseInt(timeParts[2])
-            );
-            resolve(date);
-          } else {
-            resolve(null);
-          }
-        } catch (error) {
-          console.error("Error extracting EXIF data:", error);
-          resolve(null);
-        }
-      };
-      reader.onerror = () => resolve(null);
-      reader.readAsArrayBuffer(file);
-    });
+  const extractPhotoDate = async (file: File): Promise<Date | null> => {
+    try {
+      const exif = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate', 'OffsetTimeOriginal']);
+      const raw = exif?.DateTimeOriginal || exif?.CreateDate;
+      
+      if (!raw) return null;
+
+      // exifr returns Date objects directly, but handle string fallback
+      if (raw instanceof Date) {
+        return raw;
+      }
+      if (typeof raw === "string") {
+        const [d, t] = raw.split(" ");
+        if (!d || !t) return null;
+        const [Y, M, D] = d.split(":").map(Number);
+        const [h, m, s] = t.split(":").map(Number);
+        return new Date(Y, M - 1, D, h, m, s);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("EXIF parse error:", error);
+      return null;
+    }
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
