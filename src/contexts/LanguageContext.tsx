@@ -20,6 +20,7 @@ const translations: Record<Language, Record<string, string>> = {
     'app.chooseAction': 'Choose an action to get started',
     
     // Recording Page
+    'record.title': 'Record',
     'record.step': 'Step',
     'record.of': 'of',
     'record.prompt1': 'What is it about?',
@@ -223,6 +224,7 @@ const translations: Record<Language, Record<string, string>> = {
     'app.chooseAction': '開始するアクションを選択',
     
     // Recording Page
+    'record.title': '記録',
     'record.step': 'ステップ',
     'record.of': '/',
     'record.prompt1': 'それは何についてですか？',
@@ -426,6 +428,7 @@ const translations: Record<Language, Record<string, string>> = {
     'app.chooseAction': '시작할 작업을 선택하세요',
     
     // Recording Page
+    'record.title': '기록',
     'record.step': '단계',
     'record.of': '/',
     'record.prompt1': '그것은 무엇에 관한 것인가요?',
