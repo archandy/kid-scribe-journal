@@ -24,6 +24,7 @@ interface Child {
   name: string;
   photo_url?: string;
   birthdate: string;
+  signedPhotoUrl?: string;
 }
 
 
@@ -67,7 +68,21 @@ const ReviewSheet = ({
           .order("name");
 
         if (childrenError) throw childrenError;
-        setChildren(childrenData || []);
+        
+        // Generate signed URLs for child photos
+        const childrenWithSignedUrls = await Promise.all(
+          (childrenData || []).map(async (child) => {
+            if (child.photo_url && !child.photo_url.startsWith('http')) {
+              const { data: urlData } = await supabase.storage
+                .from("child-photos")
+                .createSignedUrl(child.photo_url, 3600); // 1 hour expiry
+              return { ...child, signedPhotoUrl: urlData?.signedUrl || child.photo_url };
+            }
+            return { ...child, signedPhotoUrl: child.photo_url };
+          })
+        );
+        
+        setChildren(childrenWithSignedUrls);
 
         // Check if Notion is connected
         const { data: notionData, error: notionError } = await supabase
@@ -320,8 +335,8 @@ const ReviewSheet = ({
                     onClick={() => toggleChild(child.name)}
                   >
                     <Avatar className="h-6 w-6">
-                      {child.photo_url ? (
-                        <AvatarImage src={child.photo_url} alt={child.name} />
+                      {child.signedPhotoUrl ? (
+                        <AvatarImage src={child.signedPhotoUrl} alt={child.name} />
                       ) : (
                         <AvatarFallback className="text-xs">👶</AvatarFallback>
                       )}

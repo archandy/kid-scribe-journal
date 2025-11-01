@@ -23,6 +23,7 @@ interface Drawing {
   created_at: string;
   child_id: string;
   children: Child;
+  signedUrl?: string;
 }
 
 export default function Drawings() {
@@ -82,7 +83,37 @@ export default function Drawings() {
         .eq("family_id", familyData.family_id)
         .order("created_at", { ascending: false });
 
-      setDrawings(drawingsData || []);
+      // Generate signed URLs for each drawing's child photo
+      if (drawingsData) {
+        const drawingsWithUrls = await Promise.all(
+          drawingsData.map(async (drawing) => {
+            const { data } = await supabase.storage
+              .from("drawings")
+              .createSignedUrl(drawing.image_url, 3600); // 1 hour expiry
+            
+            // Also generate signed URL for child photo if it exists
+            let childPhotoUrl = drawing.children.photo_url;
+            if (childPhotoUrl && !childPhotoUrl.startsWith('http')) {
+              const { data: photoData } = await supabase.storage
+                .from("child-photos")
+                .createSignedUrl(childPhotoUrl, 3600);
+              childPhotoUrl = photoData?.signedUrl || childPhotoUrl;
+            }
+            
+            return { 
+              ...drawing, 
+              signedUrl: data?.signedUrl || "",
+              children: {
+                ...drawing.children,
+                photo_url: childPhotoUrl
+              }
+            };
+          })
+        );
+        setDrawings(drawingsWithUrls);
+      } else {
+        setDrawings([]);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -171,9 +202,8 @@ export default function Drawings() {
     }
   };
 
-  const getImageUrl = (path: string) => {
-    const { data } = supabase.storage.from("drawings").getPublicUrl(path);
-    return data.publicUrl;
+  const getImageUrl = (drawing: Drawing) => {
+    return drawing.signedUrl || "";
   };
 
   if (loading) {
@@ -290,7 +320,7 @@ export default function Drawings() {
               <Card key={drawing.id} className="overflow-hidden group relative">
                 <div className="aspect-square relative">
                   <img
-                    src={getImageUrl(drawing.image_url)}
+                    src={getImageUrl(drawing)}
                     alt={drawing.title || "Drawing"}
                     className="w-full h-full object-cover"
                   />

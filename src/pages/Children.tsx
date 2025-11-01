@@ -76,13 +76,18 @@ const Children = () => {
 
       if (error) throw error;
       
-      // Use photo URLs directly if they're already full URLs
-      const childrenWithSignedUrls = (data || []).map((child) => {
-        if (child.photo_url) {
+      // Generate signed URLs for child photos
+      const childrenWithSignedUrls = await Promise.all(
+        (data || []).map(async (child) => {
+          if (child.photo_url && !child.photo_url.startsWith('http')) {
+            const { data: urlData } = await supabase.storage
+              .from("child-photos")
+              .createSignedUrl(child.photo_url, 3600); // 1 hour expiry
+            return { ...child, signedPhotoUrl: urlData?.signedUrl || child.photo_url };
+          }
           return { ...child, signedPhotoUrl: child.photo_url };
-        }
-        return child;
-      });
+        })
+      );
       
       setChildren(childrenWithSignedUrls);
     } catch (error) {
