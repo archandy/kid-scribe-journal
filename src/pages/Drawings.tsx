@@ -649,7 +649,6 @@ export default function Drawings() {
             <DialogTrigger asChild>
               <Button size="sm">
                 <Upload className="mr-2 h-4 w-4" />
-                /* {t("drawings.upload")} */
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
