@@ -770,28 +770,28 @@ export default function Drawings() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {filteredGroupedDrawings.map((group) => (
-              <div key={group.date} className="space-y-3">
-                <div className="flex items-center justify-between bg-background/80 backdrop-blur-sm rounded-lg p-3 border">
-                  <h2 className="text-base font-semibold">{group.date}</h2>
+              <div key={group.date} className="space-y-4">
+                <div className="flex items-center justify-between bg-gradient-subtle backdrop-blur-sm rounded-2xl p-4 shadow-soft border border-border/50">
+                  <h2 className="text-lg font-bold bg-gradient-hero bg-clip-text text-transparent">{group.date}</h2>
                   <button
                     onClick={() => toggleGroupSelection(group.date)}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-soft ${
                       group.allSelected 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted hover:bg-muted/80"
+                        ? "bg-primary text-primary-foreground scale-110" 
+                        : "bg-background hover:bg-muted border border-border"
                     }`}
                   >
-                    {group.allSelected && <Check className="h-4 w-4" />}
+                    {group.allSelected && <Check className="h-5 w-5" />}
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {group.drawings.map((drawing) => (
                     <div key={drawing.id} className="relative group">
                       <div 
-                        className="aspect-square relative rounded-lg overflow-hidden cursor-pointer"
+                        className="aspect-square relative rounded-2xl overflow-hidden cursor-pointer bg-card shadow-soft hover:shadow-medium transition-all duration-300 border border-border/50"
                         onClick={() => {
                           setFullScreenImage(drawing);
                           setImageLoading(true);
@@ -800,11 +800,26 @@ export default function Drawings() {
                         <img
                           src={getThumbnailUrl(drawing)}
                           alt={drawing.title || "Drawing"}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                           loading="lazy"
                           decoding="async"
                           style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                         />
+                        
+                        {/* Gradient overlay on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        
+                        {/* Child avatar badge */}
+                        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <Avatar className="h-8 w-8 border-2 border-white shadow-strong">
+                            {drawing.children.photo_url && (
+                              <AvatarImage src={drawing.children.photo_url} alt={drawing.children.name} />
+                            )}
+                            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                              {drawing.children.photo_emoji || drawing.children.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
                         
                         {/* Checkbox overlay */}
                         <button
@@ -812,10 +827,10 @@ export default function Drawings() {
                             e.stopPropagation();
                             toggleDrawingSelection(drawing.id);
                           }}
-                          className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center transition-all z-10 ${
+                          className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center transition-all z-10 shadow-medium ${
                             drawing.selected
                               ? "bg-primary text-primary-foreground scale-100"
-                              : "bg-black/40 text-white scale-0 group-hover:scale-100"
+                              : "bg-white/90 text-foreground scale-0 group-hover:scale-100"
                           }`}
                         >
                           {drawing.selected && <Check className="h-4 w-4" />}
@@ -843,42 +858,53 @@ export default function Drawings() {
             setImageLoading(false);
           }
         }}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 bg-black/95">
-            <div className="relative w-full h-full flex items-center justify-center">
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-background/98 backdrop-blur-xl border-2 border-border/50">
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 gap-6">
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/30 border-t-primary"></div>
                 </div>
               )}
               {fullScreenImage && (
-                <div className="relative max-w-full max-h-[90vh] flex flex-col items-center gap-4">
-                  <img
-                    src={getFullImageUrl(fullScreenImage)}
-                    alt={fullScreenImage.title || "Drawing"}
-                    className="max-w-full max-h-[80vh] object-contain rounded-lg"
-                    onLoad={() => setImageLoading(false)}
-                    onError={() => setImageLoading(false)}
-                    style={{ opacity: imageLoading ? 0 : 1, transition: 'opacity 0.3s' }}
-                  />
-                  <div className="flex items-center gap-3 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full">
-                    <Avatar className="h-8 w-8">
+                <>
+                  {/* Header with child info */}
+                  <div className="w-full flex items-center justify-center gap-4 bg-gradient-subtle px-6 py-4 rounded-2xl shadow-soft border border-border/50">
+                    <Avatar className="h-12 w-12 border-2 border-primary shadow-soft">
                       {fullScreenImage.children.photo_url && (
                         <AvatarImage src={fullScreenImage.children.photo_url} alt={fullScreenImage.children.name} />
                       )}
-                      <AvatarFallback className="text-sm">
+                      <AvatarFallback className="text-lg bg-primary text-primary-foreground">
                         {fullScreenImage.children.photo_emoji || fullScreenImage.children.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium text-sm">{fullScreenImage.children.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(fullScreenImage.photo_date || fullScreenImage.created_at).toLocaleDateString('ja-JP', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-lg">{fullScreenImage.children.name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(fullScreenImage.photo_date || fullScreenImage.created_at).toLocaleDateString('ja-JP', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                  
+                  {/* Image container */}
+                  <div className="relative flex-1 w-full flex items-center justify-center">
+                    <img
+                      src={getFullImageUrl(fullScreenImage)}
+                      alt={fullScreenImage.title || "Drawing"}
+                      className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-strong"
+                      onLoad={() => setImageLoading(false)}
+                      onError={() => setImageLoading(false)}
+                      style={{ 
+                        opacity: imageLoading ? 0 : 1, 
+                        transition: 'opacity 0.5s ease-in-out',
+                        border: '4px solid hsl(var(--border) / 0.3)'
+                      }}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </DialogContent>
