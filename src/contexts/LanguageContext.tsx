@@ -92,6 +92,19 @@ const translations: Record<Language, Record<string, string>> = {
     'children.deleteError': 'Failed to delete',
     'children.formDescription': 'Enter your child\'s information',
     
+    // Drawings Gallery
+    'drawings.title': 'Drawings Gallery',
+    'drawings.upload': 'Upload Drawing',
+    'drawings.selectChild': 'Select Child',
+    'drawings.selectFile': 'Select Image',
+    'drawings.uploading': 'Uploading...',
+    'drawings.uploadSuccess': 'Drawing uploaded!',
+    'drawings.uploadError': 'Failed to upload',
+    'drawings.noDrawings': 'No drawings yet',
+    'drawings.deleteConfirm': 'Delete this drawing?',
+    'drawings.deleteSuccess': 'Drawing deleted',
+    'drawings.deleteError': 'Failed to delete',
+    
     // Common
     'common.loading': 'Loading...',
     'common.save': 'Save',
@@ -266,6 +279,19 @@ const translations: Record<Language, Record<string, string>> = {
     'children.deleteError': '削除に失敗しました',
     'children.formDescription': '子どもの情報を入力してください',
     
+    // Drawings Gallery
+    'drawings.title': 'お絵かきギャラリー',
+    'drawings.upload': '作品をアップロード',
+    'drawings.selectChild': '子どもを選択',
+    'drawings.selectFile': '画像を選択',
+    'drawings.uploading': 'アップロード中...',
+    'drawings.uploadSuccess': 'アップロードしました！',
+    'drawings.uploadError': 'アップロードに失敗しました',
+    'drawings.noDrawings': 'まだ作品がありません',
+    'drawings.deleteConfirm': 'この作品を削除しますか？',
+    'drawings.deleteSuccess': '作品を削除しました',
+    'drawings.deleteError': '削除に失敗しました',
+    
     // Common
     'common.loading': '読み込み中...',
     'common.save': '保存',
@@ -439,6 +465,19 @@ const translations: Record<Language, Record<string, string>> = {
     'children.deleteSuccess': '자녀가 삭제되었습니다',
     'children.deleteError': '삭제에 실패했습니다',
     'children.formDescription': '자녀의 정보를 입력하세요',
+    
+    // Drawings Gallery
+    'drawings.title': '그림 갤러리',
+    'drawings.upload': '그림 업로드',
+    'drawings.selectChild': '자녀 선택',
+    'drawings.selectFile': '이미지 선택',
+    'drawings.uploading': '업로드 중...',
+    'drawings.uploadSuccess': '업로드 완료!',
+    'drawings.uploadError': '업로드 실패',
+    'drawings.noDrawings': '아직 그림이 없습니다',
+    'drawings.deleteConfirm': '이 그림을 삭제하시겠습니까?',
+    'drawings.deleteSuccess': '그림이 삭제되었습니다',
+    'drawings.deleteError': '삭제에 실패했습니다',
     
     // Common
     'common.loading': '로딩 중...',

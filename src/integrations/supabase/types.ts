@@ -58,6 +58,44 @@ export type Database = {
           },
         ]
       }
+      drawings: {
+        Row: {
+          child_id: string
+          created_at: string
+          family_id: string
+          id: string
+          image_url: string
+          title: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          family_id: string
+          id?: string
+          image_url: string
+          title?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          family_id?: string
+          id?: string
+          image_url?: string
+          title?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       families: {
         Row: {
           created_at: string

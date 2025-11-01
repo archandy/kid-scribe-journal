@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users } from "lucide-react";
+import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -280,6 +280,28 @@ export default function Settings() {
               >
                 <Users className="mr-2 h-4 w-4" />
                 {t('settings.manageChildren')}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Image className="h-5 w-5" />
+                {t('drawings.title')}
+              </CardTitle>
+              <CardDescription>
+                View and upload your children's drawings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => navigate("/drawings")}
+                variant="outline"
+                className="w-full"
+              >
+                <Image className="mr-2 h-4 w-4" />
+                {t('drawings.title')}
               </Button>
             </CardContent>
           </Card>

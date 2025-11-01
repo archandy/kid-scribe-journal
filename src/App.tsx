@@ -8,6 +8,7 @@ import Settings from "./pages/Settings";
 import Children from "./pages/Children";
 import Auth from "./pages/Auth";
 import Notes from "./pages/Notes";
+import Drawings from "./pages/Drawings";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/children" element={<Children />} />
           <Route path="/notes" element={<Notes />} />
+          <Route path="/drawings" element={<Drawings />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/accept-invitation" element={<AcceptInvitation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
