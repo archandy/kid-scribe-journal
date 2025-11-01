@@ -12,7 +12,8 @@ export function Layout({ children }: LayoutProps) {
     <SidebarProvider>
       <style>{`
         [data-sidebar="sidebar"] [data-sidebar="overlay"] {
-          background-color: rgba(0, 0, 0, 0.2) !important;
+          background-color: rgba(0, 0, 0, 0.05) !important;
+          backdrop-filter: blur(2px);
         }
       `}</style>
       <div className="min-h-screen flex w-full bg-background">
