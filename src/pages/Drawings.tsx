@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Home, Trash2, Check } from "lucide-react";
+import { Upload, Home, Trash2, Check, Filter } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EXIF from "exif-js";
 
 interface Child {
@@ -51,6 +52,7 @@ export default function Drawings() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [photoDate, setPhotoDate] = useState<Date | null>(null);
   const [groupedDrawings, setGroupedDrawings] = useState<GroupedDrawings[]>([]);
+  const [filterChildId, setFilterChildId] = useState<string>("all");
 
   useEffect(() => {
     fetchData();
@@ -95,34 +97,38 @@ export default function Drawings() {
         .eq("family_id", familyData.family_id)
         .order("photo_date", { ascending: false, nullsFirst: false });
 
-      // Generate signed URLs for each drawing's child photo
+      // Optimize: Generate signed URLs in batch and with longer expiry (24h)
       if (drawingsData) {
-        const drawingsWithUrls = await Promise.all(
-          drawingsData.map(async (drawing) => {
-            const { data } = await supabase.storage
-              .from("drawings")
-              .createSignedUrl(drawing.image_url, 3600); // 1 hour expiry
-            
-            // Also generate signed URL for child photo if it exists
-            let childPhotoUrl = drawing.children.photo_url;
-            if (childPhotoUrl && !childPhotoUrl.startsWith('http')) {
-              const { data: photoData } = await supabase.storage
-                .from("child-photos")
-                .createSignedUrl(childPhotoUrl, 3600);
-              childPhotoUrl = photoData?.signedUrl || childPhotoUrl;
+        const drawingPaths = drawingsData.map(d => d.image_url);
+        const childPhotoPaths = drawingsData
+          .map(d => d.children.photo_url)
+          .filter(url => url && !url.startsWith('http')) as string[];
+
+        // Batch create signed URLs for better performance
+        const [drawingUrls, childPhotoUrls] = await Promise.all([
+          supabase.storage.from("drawings").createSignedUrls(drawingPaths, 86400),
+          childPhotoPaths.length > 0 
+            ? supabase.storage.from("child-photos").createSignedUrls(childPhotoPaths, 86400)
+            : Promise.resolve({ data: [], error: null })
+        ]);
+
+        const drawingsWithUrls = drawingsData.map((drawing, index) => {
+          let childPhotoUrl = drawing.children.photo_url;
+          if (childPhotoUrl && !childPhotoUrl.startsWith('http')) {
+            const photoIndex = childPhotoPaths.indexOf(childPhotoUrl);
+            childPhotoUrl = childPhotoUrls.data?.[photoIndex]?.signedUrl || childPhotoUrl;
+          }
+
+          return {
+            ...drawing,
+            signedUrl: drawingUrls.data?.[index]?.signedUrl || "",
+            selected: false,
+            children: {
+              ...drawing.children,
+              photo_url: childPhotoUrl
             }
-            
-            return { 
-              ...drawing, 
-              signedUrl: data?.signedUrl || "",
-              selected: false,
-              children: {
-                ...drawing.children,
-                photo_url: childPhotoUrl
-              }
-            };
-          })
-        );
+          };
+        });
         setDrawings(drawingsWithUrls);
         
         // Group drawings by date
@@ -284,7 +290,18 @@ export default function Drawings() {
     return drawing.signedUrl || "";
   };
 
-  const toggleDrawingSelection = (drawingId: string) => {
+  // Memoize filtered and grouped drawings
+  const filteredGroupedDrawings = useMemo(() => {
+    const filtered = filterChildId === "all" 
+      ? groupedDrawings 
+      : groupedDrawings.map(group => ({
+          ...group,
+          drawings: group.drawings.filter(d => d.child_id === filterChildId)
+        })).filter(group => group.drawings.length > 0);
+    return filtered;
+  }, [groupedDrawings, filterChildId]);
+
+  const toggleDrawingSelection = useCallback((drawingId: string) => {
     setDrawings(prev => prev.map(d => 
       d.id === drawingId ? { ...d, selected: !d.selected } : d
     ));
@@ -297,9 +314,9 @@ export default function Drawings() {
         d.id === drawingId ? !d.selected : d.selected
       )
     })));
-  };
+  }, []);
 
-  const toggleGroupSelection = (dateStr: string) => {
+  const toggleGroupSelection = useCallback((dateStr: string) => {
     setGroupedDrawings(prev => prev.map(group => {
       if (group.date === dateStr) {
         const newSelected = !group.allSelected;
@@ -321,7 +338,7 @@ export default function Drawings() {
       }
       return d;
     }));
-  };
+  }, [groupedDrawings]);
 
   if (loading) {
     return (
@@ -334,17 +351,33 @@ export default function Drawings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container max-w-6xl mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate("/")} title="Home">
               <Home className="h-5 w-5" />
             </Button>
-            <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
               {t("drawings.title")}
             </h1>
           </div>
 
-          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          <div className="flex items-center gap-2">
+            <Select value={filterChildId} onValueChange={setFilterChildId}>
+              <SelectTrigger className="w-[140px] md:w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("common.all") || "All"}</SelectItem>
+                {children.map((child) => (
+                  <SelectItem key={child.id} value={child.id}>
+                    {child.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Upload className="mr-2 h-4 w-4" />
@@ -423,6 +456,7 @@ export default function Drawings() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {drawings.length === 0 ? (
@@ -433,7 +467,7 @@ export default function Drawings() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {groupedDrawings.map((group) => (
+            {filteredGroupedDrawings.map((group) => (
               <div key={group.date} className="space-y-3">
                 <div className="flex items-center justify-between bg-background/80 backdrop-blur-sm rounded-lg p-3 border">
                   <h2 className="text-base font-semibold">{group.date}</h2>
@@ -457,6 +491,7 @@ export default function Drawings() {
                           src={getImageUrl(drawing)}
                           alt={drawing.title || "Drawing"}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                         
                         {/* Checkbox overlay */}
