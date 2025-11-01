@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Check, Trash2 } from "lucide-react";
+import { Upload, Check, Trash2, Download } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Layout } from "@/components/Layout";
 
@@ -380,6 +380,25 @@ export default function Drawings() {
     }
   };
 
+  const handleDownload = async (drawing: Drawing) => {
+    try {
+      const response = await fetch(getFullImageUrl(drawing));
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${drawing.children.name}_${new Date(drawing.photo_date || drawing.created_at).toLocaleDateString()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: "Downloaded successfully" });
+    } catch (error) {
+      console.error("Error downloading:", error);
+      toast({ title: "Failed to download", variant: "destructive" });
+    }
+  };
+
   const handleDelete = async (drawing: Drawing) => {
     if (!confirm(t("drawings.deleteConfirm"))) return;
 
@@ -397,6 +416,7 @@ export default function Drawings() {
       if (error) throw error;
 
       toast({ title: t("drawings.deleteSuccess") });
+      setFullScreenImage(null);
       fetchData();
     } catch (error) {
       console.error("Error deleting:", error);
@@ -837,51 +857,73 @@ export default function Drawings() {
             setImageLoading(false);
           }
         }}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-background/98 backdrop-blur-xl border-2 border-border/50">
-            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 gap-6">
+          <DialogContent className="max-w-full w-full h-full p-0 border-0 bg-transparent overflow-hidden">
+            {/* Blurred background overlay */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: fullScreenImage ? `url(${getThumbnailUrl(fullScreenImage)})` : undefined,
+                filter: 'blur(40px)',
+                transform: 'scale(1.1)'
+              }}
+            />
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-xl" />
+            
+            {/* Content */}
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-4 sm:p-8 gap-6">
               {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center z-10">
                   <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/30 border-t-primary"></div>
                 </div>
               )}
+              
               {fullScreenImage && (
                 <>
-                  {/* Header with child info */}
-                  <div className="w-full flex items-center justify-center gap-4 bg-gradient-subtle px-6 py-4 rounded-2xl shadow-soft border border-border/50">
-                    <Avatar className="h-12 w-12 border-2 border-primary shadow-soft">
-                      {fullScreenImage.children.photo_url && (
-                        <AvatarImage src={fullScreenImage.children.photo_url} alt={fullScreenImage.children.name} />
-                      )}
-                      <AvatarFallback className="text-lg bg-primary text-primary-foreground">
-                        {fullScreenImage.children.photo_emoji || fullScreenImage.children.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-lg">{fullScreenImage.children.name}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(fullScreenImage.photo_date || fullScreenImage.created_at).toLocaleDateString('ja-JP', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Image container */}
-                  <div className="relative flex-1 w-full flex items-center justify-center">
+                  {/* Main image */}
+                  <div className="flex-1 w-full flex items-center justify-center">
                     <img
                       src={getFullImageUrl(fullScreenImage)}
                       alt={fullScreenImage.title || "Drawing"}
-                      className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-strong"
+                      className="max-w-[90vw] max-h-[60vh] object-contain rounded-xl shadow-2xl"
                       onLoad={() => setImageLoading(false)}
                       onError={() => setImageLoading(false)}
                       style={{ 
                         opacity: imageLoading ? 0 : 1, 
-                        transition: 'opacity 0.5s ease-in-out',
-                        border: '4px solid hsl(var(--border) / 0.3)'
+                        transition: 'opacity 0.3s ease-in-out'
                       }}
                     />
+                  </div>
+                  
+                  {/* Options card */}
+                  <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden">
+                    {/* Child name */}
+                    <div className="px-6 py-4 text-center border-b border-border/50">
+                      <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'serif' }}>
+                        {fullScreenImage.children.name}
+                      </h2>
+                    </div>
+                    
+                    {/* Download button */}
+                    <button
+                      onClick={() => handleDownload(fullScreenImage)}
+                      className="w-full px-6 py-4 flex items-center justify-between border-b border-border/50 hover:bg-black/5 transition-colors"
+                    >
+                      <span className="text-xl font-medium text-foreground" style={{ fontFamily: 'serif' }}>
+                        Download
+                      </span>
+                      <Download className="h-6 w-6 text-foreground" />
+                    </button>
+                    
+                    {/* Delete button */}
+                    <button
+                      onClick={() => handleDelete(fullScreenImage)}
+                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-black/5 transition-colors"
+                    >
+                      <span className="text-xl font-medium text-foreground" style={{ fontFamily: 'serif' }}>
+                        Delete
+                      </span>
+                      <Trash2 className="h-6 w-6 text-foreground" />
+                    </button>
                   </div>
                 </>
               )}
