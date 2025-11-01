@@ -600,18 +600,7 @@ export default function Drawings() {
               </h1>
             </div>
 
-            <div className="flex items-center gap-2">
-              {selectedDrawings.length > 0 && (
-                <Button 
-                  variant="destructive" 
-                  onClick={handleBulkDelete}
-                  className="gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t("drawings.delete")} ({selectedDrawings.length})
-                </Button>
-              )}
-              <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <Upload className="mr-2 h-4 w-4" />
@@ -690,7 +679,6 @@ export default function Drawings() {
               </div>
             </DialogContent>
           </Dialog>
-            </div>
           </div>
           
           {/* Child filter buttons */}
@@ -703,7 +691,7 @@ export default function Drawings() {
                   : "border-border hover:border-primary/50"
               }`}
             >
-              <span className="text-sm font-medium">{t("common.all") || "All"}</span>
+              <span className="text-sm font-medium">All</span>
             </button>
             {children.map((child) => (
               <button
@@ -834,6 +822,21 @@ export default function Drawings() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Floating delete button */}
+      {selectedDrawings.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button 
+            variant="destructive" 
+            size="lg"
+            onClick={handleBulkDelete}
+            className="gap-2 shadow-lg"
+          >
+            <Trash2 className="h-5 w-5" />
+            Delete ({selectedDrawings.length})
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
