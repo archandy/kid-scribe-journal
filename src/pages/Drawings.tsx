@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, ArrowLeft, Trash2, Check } from "lucide-react";
+import { Upload, Home, Trash2, Check } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import EXIF from "exif-js";
@@ -336,8 +336,8 @@ export default function Drawings() {
       <div className="container max-w-6xl mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
-              <ArrowLeft className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")} title="Home">
+              <Home className="h-5 w-5" />
             </Button>
             <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
               {t("drawings.title")}

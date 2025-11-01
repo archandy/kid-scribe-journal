@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
+import { Home, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -218,8 +218,9 @@ const Children = () => {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/settings")}
+            title="Home"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <Home className="h-5 w-5" />
           </Button>
           <h1 className="text-3xl font-bold">{t('children.title')}</h1>
         </div>

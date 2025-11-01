@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Home } from "lucide-react";
 import NotesList from "@/components/NotesList";
 import HashtagBubbleChart from "@/components/HashtagBubbleChart";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -52,8 +52,9 @@ const Notes = () => {
             size="icon"
             onClick={() => navigate('/')}
             className="rounded-full"
+            title="Home"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <Home className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">

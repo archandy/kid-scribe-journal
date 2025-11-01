@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users, Image } from "lucide-react";
+import { Home, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users, Image, Mic, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -253,8 +253,9 @@ export default function Settings() {
               variant="ghost"
               size="icon"
               onClick={() => navigate('/')}
+              title={t('common.home')}
             >
-              <ArrowLeft className="h-5 w-5" />
+              <Home className="h-5 w-5" />
             </Button>
             <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
           </div>
@@ -262,48 +263,88 @@ export default function Settings() {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {t('settings.manageChildren')}
-              </CardTitle>
-              <CardDescription>
-                Add and manage your children's profiles
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => navigate("/children")}
-                variant="outline"
-                className="w-full"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                {t('settings.manageChildren')}
-              </Button>
-            </CardContent>
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
+            <div className="flex">
+              <div className="w-24 bg-gradient-accent flex items-center justify-center shrink-0">
+                <Users className="h-10 w-10 text-white" />
+              </div>
+              <div className="flex-1">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {t('settings.manageChildren')}
+                  </CardTitle>
+                  <CardDescription>
+                    Add and manage your children's profiles
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => navigate("/children")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    {t('settings.manageChildren')}
+                  </Button>
+                </CardContent>
+              </div>
+            </div>
           </Card>
 
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                {t('drawings.title')}
-              </CardTitle>
-              <CardDescription>
-                View and upload your children's drawings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => navigate("/drawings")}
-                variant="outline"
-                className="w-full"
-              >
-                <Image className="mr-2 h-4 w-4" />
-                {t('drawings.title')}
-              </Button>
-            </CardContent>
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
+            <div className="flex">
+              <div className="w-24 bg-gradient-secondary flex items-center justify-center shrink-0">
+                <Image className="h-10 w-10 text-white" />
+              </div>
+              <div className="flex-1">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {t('drawings.title')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('settings.drawingsDescription')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => navigate("/drawings")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Image className="mr-2 h-4 w-4" />
+                    {t('settings.viewGallery')}
+                  </Button>
+                </CardContent>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
+            <div className="flex">
+              <div className="w-24 bg-gradient-hero flex items-center justify-center shrink-0">
+                <BookOpen className="h-10 w-10 text-white" />
+              </div>
+              <div className="flex-1">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {t('notes.title')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('settings.notesDescription')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => navigate("/notes")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    {t('settings.viewNotes')}
+                  </Button>
+                </CardContent>
+              </div>
+            </div>
           </Card>
 
           <FamilyManagement />

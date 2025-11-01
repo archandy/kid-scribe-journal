@@ -72,6 +72,10 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.account': 'Account',
     'settings.signOut': 'Sign Out',
     'settings.manageChildren': 'Manage Children',
+    'settings.drawingsDescription': 'View and upload your children\'s drawings',
+    'settings.viewGallery': 'View Gallery',
+    'settings.notesDescription': 'Browse your saved notes and memories',
+    'settings.viewNotes': 'View Notes',
     
     // Children Management
     'children.title': 'Manage Children',
@@ -121,6 +125,7 @@ const translations: Record<Language, Record<string, string>> = {
     'common.save': 'Save',
     'common.cancel': 'Cancel',
     'common.back': 'Back',
+    'common.home': 'Home',
     'common.yearsOld': 'years old',
     'common.delete': 'Delete',
     'common.deleting': 'Deleting...',
@@ -270,6 +275,10 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.account': 'アカウント',
     'settings.signOut': 'サインアウト',
     'settings.manageChildren': '子どもの管理',
+    'settings.drawingsDescription': '子どもの絵を表示・アップロード',
+    'settings.viewGallery': 'ギャラリーを見る',
+    'settings.notesDescription': '保存されたノートと思い出を閲覧',
+    'settings.viewNotes': 'ノートを見る',
     
     // Children Management
     'children.title': '子どもの管理',
@@ -319,6 +328,7 @@ const translations: Record<Language, Record<string, string>> = {
     'common.save': '保存',
     'common.cancel': 'キャンセル',
     'common.back': '戻る',
+    'common.home': 'ホーム',
     'common.yearsOld': '歳',
     'common.delete': '削除',
     'common.deleting': '削除中...',
@@ -468,6 +478,10 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.account': '계정',
     'settings.signOut': '로그아웃',
     'settings.manageChildren': '자녀 관리',
+    'settings.drawingsDescription': '자녀의 그림 보기 및 업로드',
+    'settings.viewGallery': '갤러리 보기',
+    'settings.notesDescription': '저장된 노트와 추억 찾아보기',
+    'settings.viewNotes': '노트 보기',
     
     // Children Management
     'children.title': '자녀 관리',
@@ -517,6 +531,7 @@ const translations: Record<Language, Record<string, string>> = {
     'common.save': '저장',
     'common.cancel': '취소',
     'common.back': '뒤로',
+    'common.home': '홈',
     'common.yearsOld': '살',
     'common.delete': '삭제',
     'common.deleting': '삭제 중...',
