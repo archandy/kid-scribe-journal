@@ -66,6 +66,7 @@ export type Database = {
           id: string
           image_url: string
           photo_date: string | null
+          thumbnail_url: string | null
           title: string | null
           uploaded_by: string
         }
@@ -76,6 +77,7 @@ export type Database = {
           id?: string
           image_url: string
           photo_date?: string | null
+          thumbnail_url?: string | null
           title?: string | null
           uploaded_by: string
         }
@@ -86,6 +88,7 @@ export type Database = {
           id?: string
           image_url?: string
           photo_date?: string | null
+          thumbnail_url?: string | null
           title?: string | null
           uploaded_by?: string
         }

@@ -22,12 +22,14 @@ interface Child {
 interface Drawing {
   id: string;
   image_url: string;
+  thumbnail_url?: string;
   title?: string;
   created_at: string;
   photo_date?: string;
   child_id: string;
   children: Child;
   signedUrl?: string;
+  thumbnailSignedUrl?: string;
   selected?: boolean;
 }
 
@@ -107,13 +109,19 @@ export default function Drawings() {
         setHasMore((count || 0) > 50);
         
         const drawingPaths = drawingsData.map(d => d.image_url);
+        const thumbnailPaths = drawingsData
+          .map(d => d.thumbnail_url)
+          .filter(url => url) as string[];
         const childPhotoPaths = drawingsData
           .map(d => d.children.photo_url)
           .filter(url => url && !url.startsWith('http')) as string[];
 
         // Batch create signed URLs for better performance
-        const [drawingUrls, childPhotoUrls] = await Promise.all([
+        const [drawingUrls, thumbnailUrls, childPhotoUrls] = await Promise.all([
           supabase.storage.from("drawings").createSignedUrls(drawingPaths, 86400),
+          thumbnailPaths.length > 0
+            ? supabase.storage.from("drawings").createSignedUrls(thumbnailPaths, 86400)
+            : Promise.resolve({ data: [], error: null }),
           childPhotoPaths.length > 0 
             ? supabase.storage.from("child-photos").createSignedUrls(childPhotoPaths, 86400)
             : Promise.resolve({ data: [], error: null })
@@ -126,9 +134,14 @@ export default function Drawings() {
             childPhotoUrl = childPhotoUrls.data?.[photoIndex]?.signedUrl || childPhotoUrl;
           }
 
+          let thumbnailSignedUrl = drawing.thumbnail_url 
+            ? thumbnailUrls.data?.[thumbnailPaths.indexOf(drawing.thumbnail_url)]?.signedUrl || ""
+            : "";
+
           return {
             ...drawing,
             signedUrl: drawingUrls.data?.[index]?.signedUrl || "",
+            thumbnailSignedUrl,
             selected: false,
             children: {
               ...drawing.children,
@@ -170,6 +183,53 @@ export default function Drawings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateThumbnail = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+
+          // Calculate thumbnail dimensions (max 400px width)
+          const maxWidth = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to create thumbnail'));
+              }
+            },
+            'image/jpeg',
+            0.7
+          );
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
   };
 
   const extractPhotoDate = (file: File): Promise<Date | null> => {
@@ -236,14 +296,23 @@ export default function Drawings() {
       if (!user) return;
 
       const fileExt = selectedFile.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const timestamp = Date.now();
+      const fileName = `${timestamp}.${fileExt}`;
+      const thumbnailFileName = `${timestamp}_thumb.jpg`;
       const filePath = `${familyId}/${fileName}`;
+      const thumbnailPath = `${familyId}/${thumbnailFileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("drawings")
-        .upload(filePath, selectedFile);
+      // Generate thumbnail
+      const thumbnailBlob = await generateThumbnail(selectedFile);
 
-      if (uploadError) throw uploadError;
+      // Upload both full-size and thumbnail in parallel
+      const [uploadResult, thumbnailResult] = await Promise.all([
+        supabase.storage.from("drawings").upload(filePath, selectedFile),
+        supabase.storage.from("drawings").upload(thumbnailPath, thumbnailBlob)
+      ]);
+
+      if (uploadResult.error) throw uploadResult.error;
+      if (thumbnailResult.error) throw thumbnailResult.error;
 
       const { error: insertError } = await supabase
         .from("drawings")
@@ -251,6 +320,7 @@ export default function Drawings() {
           family_id: familyId,
           child_id: selectedChild,
           image_url: filePath,
+          thumbnail_url: thumbnailPath,
           uploaded_by: user.id,
           photo_date: photoDate?.toISOString(),
         });
@@ -293,7 +363,11 @@ export default function Drawings() {
     }
   };
 
-  const getImageUrl = (drawing: Drawing) => {
+  const getThumbnailUrl = (drawing: Drawing) => {
+    return drawing.thumbnailSignedUrl || drawing.signedUrl || "";
+  };
+
+  const getFullImageUrl = (drawing: Drawing) => {
     return drawing.signedUrl || "";
   };
 
@@ -318,12 +392,18 @@ export default function Drawings() {
 
       if (moreDrawings && moreDrawings.length > 0) {
         const drawingPaths = moreDrawings.map(d => d.image_url);
+        const thumbnailPaths = moreDrawings
+          .map(d => d.thumbnail_url)
+          .filter(url => url) as string[];
         const childPhotoPaths = moreDrawings
           .map(d => d.children.photo_url)
           .filter(url => url && !url.startsWith('http')) as string[];
 
-        const [drawingUrls, childPhotoUrls] = await Promise.all([
+        const [drawingUrls, thumbnailUrls, childPhotoUrls] = await Promise.all([
           supabase.storage.from("drawings").createSignedUrls(drawingPaths, 86400),
+          thumbnailPaths.length > 0
+            ? supabase.storage.from("drawings").createSignedUrls(thumbnailPaths, 86400)
+            : Promise.resolve({ data: [], error: null }),
           childPhotoPaths.length > 0 
             ? supabase.storage.from("child-photos").createSignedUrls(childPhotoPaths, 86400)
             : Promise.resolve({ data: [], error: null })
@@ -336,9 +416,14 @@ export default function Drawings() {
             childPhotoUrl = childPhotoUrls.data?.[photoIndex]?.signedUrl || childPhotoUrl;
           }
 
+          let thumbnailSignedUrl = drawing.thumbnail_url 
+            ? thumbnailUrls.data?.[thumbnailPaths.indexOf(drawing.thumbnail_url)]?.signedUrl || ""
+            : "";
+
           return {
             ...drawing,
             signedUrl: drawingUrls.data?.[index]?.signedUrl || "",
+            thumbnailSignedUrl,
             selected: false,
             children: {
               ...drawing.children,
@@ -622,7 +707,7 @@ export default function Drawings() {
                         onClick={() => setFullScreenImage(drawing)}
                       >
                         <img
-                          src={getImageUrl(drawing)}
+                          src={getThumbnailUrl(drawing)}
                           alt={drawing.title || "Drawing"}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           loading="lazy"
@@ -667,7 +752,7 @@ export default function Drawings() {
               {fullScreenImage && (
                 <div className="relative max-w-full max-h-[90vh] flex flex-col items-center gap-4">
                   <img
-                    src={getImageUrl(fullScreenImage)}
+                    src={getFullImageUrl(fullScreenImage)}
                     alt={fullScreenImage.title || "Drawing"}
                     className="max-w-full max-h-[80vh] object-contain rounded-lg"
                   />
