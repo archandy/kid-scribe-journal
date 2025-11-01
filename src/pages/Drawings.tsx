@@ -53,6 +53,7 @@ export default function Drawings() {
   const [photoDate, setPhotoDate] = useState<Date | null>(null);
   const [groupedDrawings, setGroupedDrawings] = useState<GroupedDrawings[]>([]);
   const [filterChildId, setFilterChildId] = useState<string>("all");
+  const [fullScreenImage, setFullScreenImage] = useState<Drawing | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -486,18 +487,25 @@ export default function Drawings() {
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                   {group.drawings.map((drawing) => (
                     <div key={drawing.id} className="relative group">
-                      <div className="aspect-square relative rounded-lg overflow-hidden">
+                      <div 
+                        className="aspect-square relative rounded-lg overflow-hidden cursor-pointer"
+                        onClick={() => setFullScreenImage(drawing)}
+                      >
                         <img
                           src={getImageUrl(drawing)}
                           alt={drawing.title || "Drawing"}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           loading="lazy"
+                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                         />
                         
                         {/* Checkbox overlay */}
                         <button
-                          onClick={() => toggleDrawingSelection(drawing.id)}
-                          className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDrawingSelection(drawing.id);
+                          }}
+                          className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center transition-all z-10 ${
                             drawing.selected
                               ? "bg-primary text-primary-foreground scale-100"
                               : "bg-black/40 text-white scale-0 group-hover:scale-100"
@@ -507,12 +515,15 @@ export default function Drawings() {
                         </button>
                         
                         {/* Delete button on hover */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                           <Button
                             variant="destructive"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDelete(drawing)}
+                            className="h-8 w-8 pointer-events-auto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(drawing);
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -525,6 +536,41 @@ export default function Drawings() {
             ))}
           </div>
         )}
+
+        {/* Full-screen image dialog */}
+        <Dialog open={!!fullScreenImage} onOpenChange={(open) => !open && setFullScreenImage(null)}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 bg-black/95">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {fullScreenImage && (
+                <div className="relative max-w-full max-h-[90vh] flex flex-col items-center gap-4">
+                  <img
+                    src={getImageUrl(fullScreenImage)}
+                    alt={fullScreenImage.title || "Drawing"}
+                    className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                  />
+                  <div className="flex items-center gap-3 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      {fullScreenImage.children.photo_url && (
+                        <AvatarImage src={fullScreenImage.children.photo_url} alt={fullScreenImage.children.name} />
+                      )}
+                      <AvatarFallback className="text-sm">
+                        {fullScreenImage.children.photo_emoji || fullScreenImage.children.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-sm">{fullScreenImage.children.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(fullScreenImage.photo_date || fullScreenImage.created_at).toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
