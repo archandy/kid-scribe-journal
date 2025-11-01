@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Home, Check } from "lucide-react";
+import { Upload, Home, Check, Trash2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -347,6 +347,9 @@ export default function Drawings() {
 
     try {
       await supabase.storage.from("drawings").remove([drawing.image_url]);
+      if (drawing.thumbnail_url) {
+        await supabase.storage.from("drawings").remove([drawing.thumbnail_url]);
+      }
       
       const { error } = await supabase
         .from("drawings")
@@ -356,6 +359,40 @@ export default function Drawings() {
       if (error) throw error;
 
       toast({ title: t("drawings.deleteSuccess") });
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting:", error);
+      toast({ title: t("drawings.deleteError"), variant: "destructive" });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const count = selectedDrawings.length;
+    if (!confirm(t("drawings.deleteConfirm") + ` (${count} ${count === 1 ? 'item' : 'items'})`)) return;
+
+    try {
+      // Delete storage files
+      const imagePaths = selectedDrawings.map(d => d.image_url);
+      const thumbnailPaths = selectedDrawings
+        .map(d => d.thumbnail_url)
+        .filter(url => url) as string[];
+
+      await Promise.all([
+        supabase.storage.from("drawings").remove(imagePaths),
+        thumbnailPaths.length > 0 
+          ? supabase.storage.from("drawings").remove(thumbnailPaths)
+          : Promise.resolve()
+      ]);
+      
+      // Delete database records
+      const { error } = await supabase
+        .from("drawings")
+        .delete()
+        .in("id", selectedDrawings.map(d => d.id));
+
+      if (error) throw error;
+
+      toast({ title: `${count} ${count === 1 ? 'item' : 'items'} ${t("drawings.deleteSuccess")}` });
       fetchData();
     } catch (error) {
       console.error("Error deleting:", error);
@@ -441,6 +478,11 @@ export default function Drawings() {
       console.error("Error loading more drawings:", error);
     }
   }, [familyId, drawings.length, hasMore]);
+
+  // Memoize selected drawings count
+  const selectedDrawings = useMemo(() => {
+    return drawings.filter(d => d.selected);
+  }, [drawings]);
 
   // Memoize filtered and grouped drawings with progressive loading
   const filteredGroupedDrawings = useMemo(() => {
@@ -558,14 +600,25 @@ export default function Drawings() {
               </h1>
             </div>
 
-            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t("drawings.upload")}
+            <div className="flex items-center gap-2">
+              {selectedDrawings.length > 0 && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleBulkDelete}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("drawings.delete")} ({selectedDrawings.length})
                 </Button>
-              </DialogTrigger>
-            <DialogContent className="max-w-md">
+              )}
+              <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Upload className="mr-2 h-4 w-4" />
+                    {t("drawings.upload")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>{t("drawings.upload")}</DialogTitle>
               </DialogHeader>
@@ -637,6 +690,7 @@ export default function Drawings() {
               </div>
             </DialogContent>
           </Dialog>
+            </div>
           </div>
           
           {/* Child filter buttons */}
