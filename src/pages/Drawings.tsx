@@ -244,32 +244,35 @@ export default function Drawings() {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          EXIF.getData(img as any, function() {
-            const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
-            if (dateTimeOriginal) {
-              // EXIF date format: "YYYY:MM:DD HH:MM:SS"
-              const parts = dateTimeOriginal.split(" ");
-              const dateParts = parts[0].split(":");
-              const timeParts = parts[1].split(":");
-              const date = new Date(
-                parseInt(dateParts[0]),
-                parseInt(dateParts[1]) - 1,
-                parseInt(dateParts[2]),
-                parseInt(timeParts[0]),
-                parseInt(timeParts[1]),
-                parseInt(timeParts[2])
-              );
-              resolve(date);
-            } else {
-              resolve(null);
-            }
-          });
-        };
-        img.src = e.target?.result as string;
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const tags = EXIF.readFromBinaryFile(arrayBuffer);
+          
+          if (tags && tags.DateTimeOriginal) {
+            // EXIF date format: "YYYY:MM:DD HH:MM:SS"
+            const dateTimeOriginal = tags.DateTimeOriginal;
+            const parts = dateTimeOriginal.split(" ");
+            const dateParts = parts[0].split(":");
+            const timeParts = parts[1].split(":");
+            const date = new Date(
+              parseInt(dateParts[0]),
+              parseInt(dateParts[1]) - 1,
+              parseInt(dateParts[2]),
+              parseInt(timeParts[0]),
+              parseInt(timeParts[1]),
+              parseInt(timeParts[2])
+            );
+            resolve(date);
+          } else {
+            resolve(null);
+          }
+        } catch (error) {
+          console.error("Error extracting EXIF data:", error);
+          resolve(null);
+        }
       };
-      reader.readAsDataURL(file);
+      reader.onerror = () => resolve(null);
+      reader.readAsArrayBuffer(file);
     });
   };
 
