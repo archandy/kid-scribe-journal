@@ -1,7 +1,7 @@
-import Record from "./Record";
+import Home from "./Home";
 
 const Index = () => {
-  return <Record />;
+  return <Home />;
 };
 
 export default Index;

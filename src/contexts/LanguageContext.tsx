@@ -16,6 +16,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Header
     'app.title': 'Kids Journal',
     'app.subtitle': 'Capture moments, preserve memories',
+    'app.welcome': 'What would you like to do?',
+    'app.chooseAction': 'Choose an action to get started',
     
     // Recording Page
     'record.step': 'Step',
@@ -25,6 +27,13 @@ const translations: Record<Language, Record<string, string>> = {
     'record.tapToStart': 'Tap to start recording your first response',
     'record.tapToContinue': 'Tap to continue to the next question',
     'record.step2Tip': 'When recording your child\'s moment, try to include what happened, how they reacted, and what that might show about their personality or growth',
+    
+    // Home Page
+    'home.recordNote': 'Record a Note',
+    'home.uploadDrawing': 'Upload Drawings',
+    'home.recordDescription': 'Capture special moments with voice',
+    'home.drawingDescription': 'Save your children\'s artwork',
+    'home.menu': 'Menu',
     
     // Review Sheet
     'review.title': 'Review & Save',
@@ -203,6 +212,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Header
     'app.title': '子供の日記',
     'app.subtitle': '瞬間を記録し、思い出を保存',
+    'app.welcome': '何をしますか？',
+    'app.chooseAction': '開始するアクションを選択',
     
     // Recording Page
     'record.step': 'ステップ',
@@ -212,6 +223,13 @@ const translations: Record<Language, Record<string, string>> = {
     'record.tapToStart': 'タップして最初の回答を録音',
     'record.tapToContinue': 'タップして次の質問に進む',
     'record.step2Tip': 'お子様の瞬間を記録するときは、何が起こったか、どのように反応したか、それが性格や成長について何を示しているかを含めてみてください',
+    
+    // Home Page
+    'home.recordNote': 'メモを録音',
+    'home.uploadDrawing': '絵をアップロード',
+    'home.recordDescription': '声で特別な瞬間を記録',
+    'home.drawingDescription': 'お子様のアートワークを保存',
+    'home.menu': 'メニュー',
     
     // Review Sheet
     'review.title': '確認と保存',
@@ -390,6 +408,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Header
     'app.title': '아이들의 일기',
     'app.subtitle': '순간을 기록하고 추억을 보존',
+    'app.welcome': '무엇을 하시겠어요?',
+    'app.chooseAction': '시작할 작업을 선택하세요',
     
     // Recording Page
     'record.step': '단계',
@@ -399,6 +419,13 @@ const translations: Record<Language, Record<string, string>> = {
     'record.tapToStart': '첫 번째 응답을 녹음하려면 탭하세요',
     'record.tapToContinue': '다음 질문으로 넘어가려면 탭하세요',
     'record.step2Tip': '자녀의 순간을 기록할 때는 무슨 일이 있었는지, 어떻게 반응했는지, 그것이 성격이나 성장에 대해 무엇을 보여주는지 포함해 보세요',
+    
+    // Home Page
+    'home.recordNote': '메모 녹음',
+    'home.uploadDrawing': '그림 업로드',
+    'home.recordDescription': '음성으로 특별한 순간 기록',
+    'home.drawingDescription': '자녀의 작품 저장',
+    'home.menu': '메뉴',
     
     // Review Sheet
     'review.title': '검토 및 저장',
