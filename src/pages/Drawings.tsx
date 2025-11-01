@@ -54,6 +54,8 @@ export default function Drawings() {
   const [groupedDrawings, setGroupedDrawings] = useState<GroupedDrawings[]>([]);
   const [filterChildId, setFilterChildId] = useState<string>("all");
   const [fullScreenImage, setFullScreenImage] = useState<Drawing | null>(null);
+  const [loadedCount, setLoadedCount] = useState(30); // Load 30 images initially
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -84,7 +86,8 @@ export default function Drawings() {
 
       setChildren(childrenData || []);
 
-      const { data: drawingsData } = await supabase
+      // Load only first 50 drawings initially for faster load
+      const { data: drawingsData, count } = await supabase
         .from("drawings")
         .select(`
           *,
@@ -94,12 +97,15 @@ export default function Drawings() {
             photo_url,
             photo_emoji
           )
-        `)
+        `, { count: 'exact' })
         .eq("family_id", familyData.family_id)
-        .order("photo_date", { ascending: false, nullsFirst: false });
+        .order("photo_date", { ascending: false, nullsFirst: false })
+        .limit(50);
 
       // Optimize: Generate signed URLs in batch and with longer expiry (24h)
       if (drawingsData) {
+        setHasMore((count || 0) > 50);
+        
         const drawingPaths = drawingsData.map(d => d.image_url);
         const childPhotoPaths = drawingsData
           .map(d => d.children.photo_url)
@@ -291,7 +297,67 @@ export default function Drawings() {
     return drawing.signedUrl || "";
   };
 
-  // Memoize filtered and grouped drawings
+  const loadMoreDrawings = useCallback(async () => {
+    if (!familyId || !hasMore) return;
+    
+    try {
+      const { data: moreDrawings } = await supabase
+        .from("drawings")
+        .select(`
+          *,
+          children:child_id (
+            id,
+            name,
+            photo_url,
+            photo_emoji
+          )
+        `)
+        .eq("family_id", familyId)
+        .order("photo_date", { ascending: false, nullsFirst: false })
+        .range(drawings.length, drawings.length + 49);
+
+      if (moreDrawings && moreDrawings.length > 0) {
+        const drawingPaths = moreDrawings.map(d => d.image_url);
+        const childPhotoPaths = moreDrawings
+          .map(d => d.children.photo_url)
+          .filter(url => url && !url.startsWith('http')) as string[];
+
+        const [drawingUrls, childPhotoUrls] = await Promise.all([
+          supabase.storage.from("drawings").createSignedUrls(drawingPaths, 86400),
+          childPhotoPaths.length > 0 
+            ? supabase.storage.from("child-photos").createSignedUrls(childPhotoPaths, 86400)
+            : Promise.resolve({ data: [], error: null })
+        ]);
+
+        const drawingsWithUrls = moreDrawings.map((drawing, index) => {
+          let childPhotoUrl = drawing.children.photo_url;
+          if (childPhotoUrl && !childPhotoUrl.startsWith('http')) {
+            const photoIndex = childPhotoPaths.indexOf(childPhotoUrl);
+            childPhotoUrl = childPhotoUrls.data?.[photoIndex]?.signedUrl || childPhotoUrl;
+          }
+
+          return {
+            ...drawing,
+            signedUrl: drawingUrls.data?.[index]?.signedUrl || "",
+            selected: false,
+            children: {
+              ...drawing.children,
+              photo_url: childPhotoUrl
+            }
+          };
+        });
+
+        setDrawings(prev => [...prev, ...drawingsWithUrls]);
+        setHasMore(moreDrawings.length === 50);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error loading more drawings:", error);
+    }
+  }, [familyId, drawings.length, hasMore]);
+
+  // Memoize filtered and grouped drawings with progressive loading
   const filteredGroupedDrawings = useMemo(() => {
     const filtered = filterChildId === "all" 
       ? groupedDrawings 
@@ -299,8 +365,20 @@ export default function Drawings() {
           ...group,
           drawings: group.drawings.filter(d => d.child_id === filterChildId)
         })).filter(group => group.drawings.length > 0);
-    return filtered;
-  }, [groupedDrawings, filterChildId]);
+    
+    // Apply loaded count limit
+    let count = 0;
+    const limited = filtered.map(group => {
+      const remainingSlots = loadedCount - count;
+      if (remainingSlots <= 0) return { ...group, drawings: [] };
+      
+      const limitedDrawings = group.drawings.slice(0, remainingSlots);
+      count += limitedDrawings.length;
+      return { ...group, drawings: limitedDrawings };
+    }).filter(group => group.drawings.length > 0);
+    
+    return limited;
+  }, [groupedDrawings, filterChildId, loadedCount]);
 
   const toggleDrawingSelection = useCallback((drawingId: string) => {
     setDrawings(prev => prev.map(d => 
@@ -340,6 +418,38 @@ export default function Drawings() {
       return d;
     }));
   }, [groupedDrawings]);
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMoreDrawings();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const sentinel = document.getElementById('load-more-sentinel');
+    if (sentinel) observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [hasMore, loadMoreDrawings]);
+
+  // Progressive image loading
+  const handleScroll = useCallback(() => {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const documentHeight = document.documentElement.scrollHeight;
+    
+    if (scrollPosition >= documentHeight - 500 && loadedCount < drawings.length) {
+      setLoadedCount(prev => Math.min(prev + 20, drawings.length));
+    }
+  }, [loadedCount, drawings.length]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   if (loading) {
     return (
@@ -516,6 +626,7 @@ export default function Drawings() {
                           alt={drawing.title || "Drawing"}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           loading="lazy"
+                          decoding="async"
                           style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                         />
                         
@@ -539,6 +650,13 @@ export default function Drawings() {
                 </div>
               </div>
             ))}
+            
+            {/* Load more sentinel */}
+            {hasMore && (
+              <div id="load-more-sentinel" className="h-20 flex items-center justify-center">
+                <p className="text-sm text-muted-foreground">{t("common.loading") || "Loading..."}</p>
+              </div>
+            )}
           </div>
         )}
 
