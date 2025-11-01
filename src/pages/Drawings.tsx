@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Home, Check, Trash2 } from "lucide-react";
+import { Upload, Check, Trash2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Layout } from "@/components/Layout";
 
 import * as exifr from "exifr";
 
@@ -633,36 +633,20 @@ export default function Drawings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10 relative overflow-hidden">
-      {/* Playful background elements */}
-      <div className="absolute top-20 right-10 w-32 h-32 bg-gradient-fun rounded-full opacity-10 blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-40 left-10 w-40 h-40 bg-gradient-playful rounded-full opacity-10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      
-      <div className="container max-w-6xl mx-auto p-4 space-y-6 relative z-10">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate("/")} 
-                title="Home"
-                className="rounded-full hover:bg-primary/10 hover:scale-110 transition-all duration-300"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
-              <h1 className="text-2xl md:text-4xl font-bold bg-gradient-fun bg-clip-text text-transparent">
-                ✨ {t("drawings.title")} ✨
-              </h1>
-            </div>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-foreground">
+          {t("drawings.title")}
+        </h1>
 
-            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-fun hover:shadow-accent-glow transition-all duration-300 hover:scale-105 rounded-full px-6">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {t("drawings.upload")}
-                  </Button>
-                </DialogTrigger>
+        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              {t("drawings.upload")}
+            </Button>
+          </DialogTrigger>
                 <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>{t("drawings.upload")}</DialogTitle>
@@ -735,42 +719,41 @@ export default function Drawings() {
               </div>
             </DialogContent>
           </Dialog>
-          </div>
+        </div>
           
-          {/* Child filter buttons */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-2">
+        {/* Child filter buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-border pb-2 mb-6">
+          <button
+            onClick={() => setFilterChildId("all")}
+            className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+              filterChildId === "all"
+                ? "bg-secondary text-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            }`}
+          >
+            All
+          </button>
+          {children.map((child) => (
             <button
-              onClick={() => setFilterChildId("all")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-full transition-all whitespace-nowrap shadow-soft hover:shadow-medium ${
-                filterChildId === "all"
-                  ? "bg-gradient-fun text-white scale-105 shadow-accent-glow"
-                  : "bg-card border border-border hover:scale-105"
+              key={child.id}
+              onClick={() => setFilterChildId(child.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                filterChildId === child.id
+                  ? "bg-secondary text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               }`}
             >
-              <span className="text-sm font-bold">🌟 All</span>
+              <Avatar className="h-5 w-5">
+                {child.photo_url && (
+                  <AvatarImage src={child.photo_url} alt={child.name} />
+                )}
+                <AvatarFallback className="text-xs">
+                  {child.photo_emoji || child.name[0]}
+                </AvatarFallback>
+              </Avatar>
+              {child.name}
             </button>
-            {children.map((child) => (
-              <button
-                key={child.id}
-                onClick={() => setFilterChildId(child.id)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-full transition-all whitespace-nowrap shadow-soft hover:shadow-medium ${
-                  filterChildId === child.id
-                    ? "bg-gradient-playful text-white scale-105 shadow-accent-glow"
-                    : "bg-card border border-border hover:scale-105"
-                }`}
-              >
-                <Avatar className="h-7 w-7 border-2 border-white/50">
-                  {child.photo_url && (
-                    <AvatarImage src={child.photo_url} alt={child.name} />
-                  )}
-                  <AvatarFallback className="text-xs font-bold">
-                    {child.photo_emoji || child.name[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-bold">{child.name}</span>
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
 
         {drawings.length === 0 ? (
@@ -780,34 +763,30 @@ export default function Drawings() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-8">
-            {filteredGroupedDrawings.map((group, idx) => (
-              <div key={group.date} className="space-y-4 animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
-                <div className="flex items-center justify-between bg-gradient-playful backdrop-blur-sm rounded-3xl p-5 shadow-medium border-2 border-white/20 hover:shadow-accent-glow transition-all duration-300">
-                  <h2 className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                    📅 {group.date}
+          <div className="space-y-6">
+            {filteredGroupedDrawings.map((group) => (
+              <div key={group.date} className="space-y-3">
+                <div className="flex items-center justify-between py-2">
+                  <h2 className="text-sm font-semibold text-foreground">
+                    {group.date}
                   </h2>
                   <button
                     onClick={() => toggleGroupSelection(group.date)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-soft ${
+                    className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
                       group.allSelected 
-                        ? "bg-white text-primary scale-110 shadow-strong" 
-                        : "bg-white/20 hover:bg-white/30 border-2 border-white/50 text-white"
+                        ? "bg-primary text-primary-foreground" 
+                        : "border border-border hover:bg-secondary"
                     }`}
                   >
-                    {group.allSelected && <Check className="h-5 w-5" />}
+                    {group.allSelected && <Check className="h-4 w-4" />}
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-                  {group.drawings.map((drawing, drawIdx) => (
-                    <div 
-                      key={drawing.id} 
-                      className="relative group animate-scale-in" 
-                      style={{ animationDelay: `${drawIdx * 0.05}s` }}
-                    >
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+                  {group.drawings.map((drawing) => (
+                    <div key={drawing.id} className="relative group">
                       <div 
-                        className="aspect-square relative rounded-3xl overflow-hidden cursor-pointer bg-white shadow-medium hover:shadow-strong transition-all duration-300 border-4 border-white hover:border-primary/30 hover:-translate-y-2 hover:rotate-1"
+                        className="aspect-square relative rounded-lg overflow-hidden cursor-pointer bg-muted hover:opacity-90 transition-opacity"
                         onClick={() => {
                           setFullScreenImage(drawing);
                           setImageLoading(true);
@@ -816,31 +795,10 @@ export default function Drawings() {
                         <img
                           src={getThumbnailUrl(drawing)}
                           alt={drawing.title || "Drawing"}
-                          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-125 group-hover:rotate-3"
+                          className="w-full h-full object-cover"
                           loading="lazy"
                           decoding="async"
-                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                         />
-                        
-                        {/* Gradient overlay on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-accent/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        
-                        {/* Child avatar badge */}
-                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                          <Avatar className="h-10 w-10 border-3 border-white shadow-strong ring-2 ring-primary/50">
-                            {drawing.children.photo_url && (
-                              <AvatarImage src={drawing.children.photo_url} alt={drawing.children.name} />
-                            )}
-                            <AvatarFallback className="text-sm font-bold bg-gradient-fun text-white">
-                              {drawing.children.photo_emoji || drawing.children.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                        
-                        {/* Sparkle effect */}
-                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 text-2xl animate-bounce">
-                          ✨
-                        </div>
                         
                         {/* Checkbox overlay */}
                         <button
@@ -848,13 +806,13 @@ export default function Drawings() {
                             e.stopPropagation();
                             toggleDrawingSelection(drawing.id);
                           }}
-                          className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all z-10 shadow-strong font-bold ${
+                          className={`absolute top-2 left-2 w-5 h-5 rounded flex items-center justify-center transition-all z-10 ${
                             drawing.selected
-                              ? "bg-gradient-fun text-white scale-110 ring-4 ring-white/50"
-                              : "bg-white text-primary scale-0 group-hover:scale-100"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background/80 opacity-0 group-hover:opacity-100"
                           }`}
                         >
-                          {drawing.selected ? <Check className="h-5 w-5" /> : ""}
+                          {drawing.selected && <Check className="h-3 w-3" />}
                         </button>
                       </div>
                     </div>
@@ -930,22 +888,21 @@ export default function Drawings() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
       
-      {/* Floating delete button */}
-      {selectedDrawings.length > 0 && (
-        <div className="fixed bottom-8 right-8 z-50 animate-scale-in">
-          <Button 
-            variant="destructive" 
-            size="lg"
-            onClick={handleBulkDelete}
-            className="gap-2 shadow-strong rounded-full px-6 py-6 hover:scale-110 transition-all duration-300 ring-4 ring-destructive/20"
-          >
-            <Trash2 className="h-6 w-6" />
-            <span className="font-bold">Delete ({selectedDrawings.length})</span>
-          </Button>
-        </div>
-      )}
-    </div>
+        {/* Floating delete button */}
+        {selectedDrawings.length > 0 && (
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button 
+              variant="destructive" 
+              onClick={handleBulkDelete}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete ({selectedDrawings.length})
+            </Button>
+          </div>
+        )}
+      </div>
+    </Layout>
   );
 }
