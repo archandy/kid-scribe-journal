@@ -65,6 +65,7 @@ export type Database = {
           family_id: string
           id: string
           image_url: string
+          photo_date: string | null
           title: string | null
           uploaded_by: string
         }
@@ -74,6 +75,7 @@ export type Database = {
           family_id: string
           id?: string
           image_url: string
+          photo_date?: string | null
           title?: string | null
           uploaded_by: string
         }
@@ -83,6 +85,7 @@ export type Database = {
           family_id?: string
           id?: string
           image_url?: string
+          photo_date?: string | null
           title?: string | null
           uploaded_by?: string
         }

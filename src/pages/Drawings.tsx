@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, ArrowLeft, Trash2 } from "lucide-react";
+import { Upload, ArrowLeft, Trash2, Check } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import EXIF from "exif-js";
 
 interface Child {
   id: string;
@@ -21,9 +23,17 @@ interface Drawing {
   image_url: string;
   title?: string;
   created_at: string;
+  photo_date?: string;
   child_id: string;
   children: Child;
   signedUrl?: string;
+  selected?: boolean;
+}
+
+interface GroupedDrawings {
+  date: string;
+  drawings: Drawing[];
+  allSelected: boolean;
 }
 
 export default function Drawings() {
@@ -39,6 +49,8 @@ export default function Drawings() {
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [photoDate, setPhotoDate] = useState<Date | null>(null);
+  const [groupedDrawings, setGroupedDrawings] = useState<GroupedDrawings[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -81,7 +93,7 @@ export default function Drawings() {
           )
         `)
         .eq("family_id", familyData.family_id)
-        .order("created_at", { ascending: false });
+        .order("photo_date", { ascending: false });
 
       // Generate signed URLs for each drawing's child photo
       if (drawingsData) {
@@ -103,6 +115,7 @@ export default function Drawings() {
             return { 
               ...drawing, 
               signedUrl: data?.signedUrl || "",
+              selected: false,
               children: {
                 ...drawing.children,
                 photo_url: childPhotoUrl
@@ -111,8 +124,33 @@ export default function Drawings() {
           })
         );
         setDrawings(drawingsWithUrls);
+        
+        // Group drawings by date
+        const grouped = drawingsWithUrls.reduce((acc: GroupedDrawings[], drawing) => {
+          const date = new Date(drawing.photo_date || drawing.created_at);
+          const dateStr = date.toLocaleDateString('ja-JP', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+          const existingGroup = acc.find(g => g.date === dateStr);
+          if (existingGroup) {
+            existingGroup.drawings.push(drawing);
+          } else {
+            acc.push({
+              date: dateStr,
+              drawings: [drawing],
+              allSelected: false
+            });
+          }
+          return acc;
+        }, []);
+        
+        setGroupedDrawings(grouped);
       } else {
         setDrawings([]);
+        setGroupedDrawings([]);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -121,7 +159,40 @@ export default function Drawings() {
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const extractPhotoDate = (file: File): Promise<Date | null> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          EXIF.getData(img as any, function() {
+            const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+            if (dateTimeOriginal) {
+              // EXIF date format: "YYYY:MM:DD HH:MM:SS"
+              const parts = dateTimeOriginal.split(" ");
+              const dateParts = parts[0].split(":");
+              const timeParts = parts[1].split(":");
+              const date = new Date(
+                parseInt(dateParts[0]),
+                parseInt(dateParts[1]) - 1,
+                parseInt(dateParts[2]),
+                parseInt(timeParts[0]),
+                parseInt(timeParts[1]),
+                parseInt(timeParts[2])
+              );
+              resolve(date);
+            } else {
+              resolve(null);
+            }
+          });
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || !event.target.files[0]) return;
 
     const file = event.target.files[0];
@@ -131,6 +202,11 @@ export default function Drawings() {
     }
 
     setSelectedFile(file);
+    
+    // Extract EXIF date
+    const exifDate = await extractPhotoDate(file);
+    setPhotoDate(exifDate || new Date(file.lastModified));
+    
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewImage(reader.result as string);
@@ -163,6 +239,7 @@ export default function Drawings() {
           child_id: selectedChild,
           image_url: filePath,
           uploaded_by: user.id,
+          photo_date: photoDate?.toISOString(),
         });
 
       if (insertError) throw insertError;
@@ -172,6 +249,7 @@ export default function Drawings() {
       setSelectedChild("");
       setPreviewImage(null);
       setSelectedFile(null);
+      setPhotoDate(null);
       fetchData();
     } catch (error) {
       console.error("Error uploading:", error);
@@ -204,6 +282,45 @@ export default function Drawings() {
 
   const getImageUrl = (drawing: Drawing) => {
     return drawing.signedUrl || "";
+  };
+
+  const toggleDrawingSelection = (drawingId: string) => {
+    setDrawings(prev => prev.map(d => 
+      d.id === drawingId ? { ...d, selected: !d.selected } : d
+    ));
+    setGroupedDrawings(prev => prev.map(group => ({
+      ...group,
+      drawings: group.drawings.map(d => 
+        d.id === drawingId ? { ...d, selected: !d.selected } : d
+      ),
+      allSelected: group.drawings.every(d => 
+        d.id === drawingId ? !d.selected : d.selected
+      )
+    })));
+  };
+
+  const toggleGroupSelection = (dateStr: string) => {
+    setGroupedDrawings(prev => prev.map(group => {
+      if (group.date === dateStr) {
+        const newSelected = !group.allSelected;
+        return {
+          ...group,
+          allSelected: newSelected,
+          drawings: group.drawings.map(d => ({ ...d, selected: newSelected }))
+        };
+      }
+      return group;
+    }));
+    
+    setDrawings(prev => prev.map(d => {
+      const group = groupedDrawings.find(g => g.date === dateStr);
+      const isInGroup = group?.drawings.some(gd => gd.id === d.id);
+      if (isInGroup) {
+        const targetGroup = groupedDrawings.find(g => g.date === dateStr);
+        return { ...d, selected: !targetGroup?.allSelected };
+      }
+      return d;
+    }));
   };
 
   if (loading) {
@@ -315,32 +432,61 @@ export default function Drawings() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {drawings.map((drawing) => (
-              <Card key={drawing.id} className="overflow-hidden group relative">
-                <div className="aspect-square relative">
-                  <img
-                    src={getImageUrl(drawing)}
-                    alt={drawing.title || "Drawing"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDelete(drawing)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+          <div className="space-y-6">
+            {groupedDrawings.map((group) => (
+              <div key={group.date} className="space-y-3">
+                <div className="flex items-center justify-between bg-background/80 backdrop-blur-sm rounded-lg p-3 border">
+                  <h2 className="text-base font-semibold">{group.date}</h2>
+                  <button
+                    onClick={() => toggleGroupSelection(group.date)}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                      group.allSelected 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
+                  >
+                    {group.allSelected && <Check className="h-4 w-4" />}
+                  </button>
                 </div>
-                <CardContent className="p-2">
-                  <p className="text-sm font-medium truncate">{drawing.children.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(drawing.created_at).toLocaleDateString()}
-                  </p>
-                </CardContent>
-              </Card>
+                
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                  {group.drawings.map((drawing) => (
+                    <div key={drawing.id} className="relative group">
+                      <div className="aspect-square relative rounded-lg overflow-hidden">
+                        <img
+                          src={getImageUrl(drawing)}
+                          alt={drawing.title || "Drawing"}
+                          className="w-full h-full object-cover"
+                        />
+                        
+                        {/* Checkbox overlay */}
+                        <button
+                          onClick={() => toggleDrawingSelection(drawing.id)}
+                          className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                            drawing.selected
+                              ? "bg-primary text-primary-foreground scale-100"
+                              : "bg-black/40 text-white scale-0 group-hover:scale-100"
+                          }`}
+                        >
+                          {drawing.selected && <Check className="h-4 w-4" />}
+                        </button>
+                        
+                        {/* Delete button on hover */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDelete(drawing)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
