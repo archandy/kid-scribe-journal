@@ -28,7 +28,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-border bg-white">
-      <SidebarContent>
+      <SidebarContent className="bg-white">
         <SidebarGroup>
           <div className="px-4 py-6">
             <h1 className={`font-semibold text-foreground transition-all ${isCollapsed ? 'text-sm text-center' : 'text-xl'}`}>
