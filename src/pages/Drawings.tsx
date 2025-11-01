@@ -92,7 +92,15 @@ export default function Drawings() {
       const { data: drawingsData, count } = await supabase
         .from("drawings")
         .select(`
-          *,
+          id,
+          image_url,
+          thumbnail_url,
+          title,
+          created_at,
+          photo_date,
+          child_id,
+          family_id,
+          uploaded_by,
           children:child_id (
             id,
             name,
@@ -103,6 +111,8 @@ export default function Drawings() {
         .eq("family_id", familyData.family_id)
         .order("photo_date", { ascending: false, nullsFirst: false })
         .limit(50);
+
+      console.log("Fetched drawings data:", drawingsData?.slice(0, 2));
 
       // Optimize: Generate signed URLs in batch and with longer expiry (24h)
       if (drawingsData) {
@@ -138,7 +148,7 @@ export default function Drawings() {
             ? thumbnailUrls.data?.[thumbnailPaths.indexOf(drawing.thumbnail_url)]?.signedUrl || ""
             : "";
 
-          return {
+          const result = {
             ...drawing,
             signedUrl: drawingUrls.data?.[index]?.signedUrl || "",
             thumbnailSignedUrl,
@@ -148,6 +158,15 @@ export default function Drawings() {
               photo_url: childPhotoUrl
             }
           };
+          
+          console.log("Drawing with URLs:", {
+            id: result.id,
+            hasSignedUrl: !!result.signedUrl,
+            hasThumbnailUrl: !!result.thumbnailSignedUrl,
+            signedUrl: result.signedUrl?.substring(0, 50)
+          });
+          
+          return result;
         });
         setDrawings(drawingsWithUrls);
         
@@ -405,6 +424,11 @@ export default function Drawings() {
   };
 
   const getFullImageUrl = (drawing: Drawing) => {
+    console.log("Getting full image URL for:", {
+      id: drawing.id,
+      signedUrl: drawing.signedUrl?.substring(0, 50),
+      hasUrl: !!drawing.signedUrl
+    });
     return drawing.signedUrl || "";
   };
 
@@ -415,7 +439,15 @@ export default function Drawings() {
       const { data: moreDrawings } = await supabase
         .from("drawings")
         .select(`
-          *,
+          id,
+          image_url,
+          thumbnail_url,
+          title,
+          created_at,
+          photo_date,
+          child_id,
+          family_id,
+          uploaded_by,
           children:child_id (
             id,
             name,
@@ -746,7 +778,10 @@ export default function Drawings() {
                     <div key={drawing.id} className="relative group">
                       <div 
                         className="aspect-square relative rounded-lg overflow-hidden cursor-pointer"
-                        onClick={() => setFullScreenImage(drawing)}
+                        onClick={() => {
+                          console.log("Clicked drawing:", drawing.id, "Has signedUrl:", !!drawing.signedUrl);
+                          setFullScreenImage(drawing);
+                        }}
                       >
                         <img
                           src={getThumbnailUrl(drawing)}
