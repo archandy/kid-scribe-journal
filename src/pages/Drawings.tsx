@@ -241,27 +241,54 @@ export default function Drawings() {
   };
 
   const extractPhotoDate = async (file: File): Promise<Date | null> => {
+    console.log("📸 Extracting EXIF from file:", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: new Date(file.lastModified).toISOString()
+    });
+    
     try {
-      const exif = await exifr.parse(file, ['DateTimeOriginal', 'CreateDate', 'OffsetTimeOriginal']);
-      const raw = exif?.DateTimeOriginal || exif?.CreateDate;
+      const exif = await exifr.parse(file, {
+        pick: ['DateTimeOriginal', 'CreateDate', 'DateTime', 'OffsetTimeOriginal'],
+        translateKeys: false,
+        translateValues: false,
+        reviveValues: true
+      });
       
-      if (!raw) return null;
+      console.log("📊 EXIF data parsed:", exif);
+      
+      const raw = exif?.DateTimeOriginal || exif?.CreateDate || exif?.DateTime;
+      
+      if (!raw) {
+        console.warn("⚠️ No EXIF date found in any field");
+        return null;
+      }
+
+      console.log("✅ Found EXIF date:", raw, "Type:", typeof raw);
 
       // exifr returns Date objects directly, but handle string fallback
       if (raw instanceof Date) {
+        console.log("✅ Returning Date object:", raw.toISOString());
         return raw;
       }
       if (typeof raw === "string") {
         const [d, t] = raw.split(" ");
-        if (!d || !t) return null;
+        if (!d || !t) {
+          console.warn("⚠️ Invalid date string format:", raw);
+          return null;
+        }
         const [Y, M, D] = d.split(":").map(Number);
         const [h, m, s] = t.split(":").map(Number);
-        return new Date(Y, M - 1, D, h, m, s);
+        const date = new Date(Y, M - 1, D, h, m, s);
+        console.log("✅ Parsed date from string:", date.toISOString());
+        return date;
       }
       
+      console.warn("⚠️ Unknown date format:", typeof raw);
       return null;
     } catch (error) {
-      console.error("EXIF parse error:", error);
+      console.error("❌ EXIF parse error:", error);
       return null;
     }
   };
@@ -270,6 +297,13 @@ export default function Drawings() {
     if (!event.target.files || !event.target.files[0]) return;
 
     const file = event.target.files[0];
+    console.log("📁 File selected:", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: new Date(file.lastModified).toISOString()
+    });
+    
     if (!file.type.startsWith("image/")) {
       toast({ title: t("drawings.uploadError"), variant: "destructive" });
       return;
@@ -278,8 +312,11 @@ export default function Drawings() {
     setSelectedFile(file);
     
     // Extract EXIF date
+    console.log("🔍 Starting EXIF extraction...");
     const exifDate = await extractPhotoDate(file);
-    setPhotoDate(exifDate || new Date(file.lastModified));
+    const finalDate = exifDate || new Date(file.lastModified);
+    console.log("📅 Final photo date:", finalDate.toISOString(), "Source:", exifDate ? "EXIF" : "lastModified");
+    setPhotoDate(finalDate);
     
     const reader = new FileReader();
     reader.onloadend = () => {
