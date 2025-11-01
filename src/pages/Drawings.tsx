@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Home, Trash2, Check, Filter } from "lucide-react";
+import { Upload, Home, Check } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import EXIF from "exif-js";
 
 interface Child {
@@ -352,39 +352,24 @@ export default function Drawings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container max-w-6xl mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")} title="Home">
-              <Home className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              {t("drawings.title")}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Select value={filterChildId} onValueChange={setFilterChildId}>
-              <SelectTrigger className="w-[140px] md:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("common.all") || "All"}</SelectItem>
-                {children.map((child) => (
-                  <SelectItem key={child.id} value={child.id}>
-                    {child.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/")} title="Home">
+                <Home className="h-5 w-5" />
+              </Button>
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+                {t("drawings.title")}
+              </h1>
+            </div>
 
             <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="mr-2 h-4 w-4" />
-                {t("drawings.upload")}
-              </Button>
-            </DialogTrigger>
+              <DialogTrigger asChild>
+                <Button>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {t("drawings.upload")}
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>{t("drawings.upload")}</DialogTitle>
@@ -458,6 +443,41 @@ export default function Drawings() {
             </DialogContent>
           </Dialog>
           </div>
+          
+          {/* Child filter buttons */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setFilterChildId("all")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all whitespace-nowrap ${
+                filterChildId === "all"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              }`}
+            >
+              <span className="text-sm font-medium">{t("common.all") || "All"}</span>
+            </button>
+            {children.map((child) => (
+              <button
+                key={child.id}
+                onClick={() => setFilterChildId(child.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all whitespace-nowrap ${
+                  filterChildId === child.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <Avatar className="h-6 w-6">
+                  {child.photo_url && (
+                    <AvatarImage src={child.photo_url} alt={child.name} />
+                  )}
+                  <AvatarFallback className="text-xs">
+                    {child.photo_emoji || child.name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium">{child.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {drawings.length === 0 ? (
@@ -513,21 +533,6 @@ export default function Drawings() {
                         >
                           {drawing.selected && <Check className="h-4 w-4" />}
                         </button>
-                        
-                        {/* Delete button on hover */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8 pointer-events-auto"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(drawing);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   ))}
