@@ -58,6 +58,7 @@ export default function Drawings() {
   const [fullScreenImage, setFullScreenImage] = useState<Drawing | null>(null);
   const [loadedCount, setLoadedCount] = useState(30); // Load 30 images initially
   const [hasMore, setHasMore] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -88,7 +89,6 @@ export default function Drawings() {
 
       setChildren(childrenData || []);
 
-      // Load only first 50 drawings initially for faster load
       const { data: drawingsData, count } = await supabase
         .from("drawings")
         .select(`
@@ -111,8 +111,6 @@ export default function Drawings() {
         .eq("family_id", familyData.family_id)
         .order("photo_date", { ascending: false, nullsFirst: false })
         .limit(50);
-
-      console.log("Fetched drawings data:", drawingsData?.slice(0, 2));
 
       // Optimize: Generate signed URLs in batch and with longer expiry (24h)
       if (drawingsData) {
@@ -148,7 +146,7 @@ export default function Drawings() {
             ? thumbnailUrls.data?.[thumbnailPaths.indexOf(drawing.thumbnail_url)]?.signedUrl || ""
             : "";
 
-          const result = {
+          return {
             ...drawing,
             signedUrl: drawingUrls.data?.[index]?.signedUrl || "",
             thumbnailSignedUrl,
@@ -158,15 +156,6 @@ export default function Drawings() {
               photo_url: childPhotoUrl
             }
           };
-          
-          console.log("Drawing with URLs:", {
-            id: result.id,
-            hasSignedUrl: !!result.signedUrl,
-            hasThumbnailUrl: !!result.thumbnailSignedUrl,
-            signedUrl: result.signedUrl?.substring(0, 50)
-          });
-          
-          return result;
         });
         setDrawings(drawingsWithUrls);
         
@@ -424,11 +413,6 @@ export default function Drawings() {
   };
 
   const getFullImageUrl = (drawing: Drawing) => {
-    console.log("Getting full image URL for:", {
-      id: drawing.id,
-      signedUrl: drawing.signedUrl?.substring(0, 50),
-      hasUrl: !!drawing.signedUrl
-    });
     return drawing.signedUrl || "";
   };
 
@@ -779,8 +763,8 @@ export default function Drawings() {
                       <div 
                         className="aspect-square relative rounded-lg overflow-hidden cursor-pointer"
                         onClick={() => {
-                          console.log("Clicked drawing:", drawing.id, "Has signedUrl:", !!drawing.signedUrl);
                           setFullScreenImage(drawing);
+                          setImageLoading(true);
                         }}
                       >
                         <img
@@ -823,15 +807,28 @@ export default function Drawings() {
         )}
 
         {/* Full-screen image dialog */}
-        <Dialog open={!!fullScreenImage} onOpenChange={(open) => !open && setFullScreenImage(null)}>
+        <Dialog open={!!fullScreenImage} onOpenChange={(open) => {
+          if (!open) {
+            setFullScreenImage(null);
+            setImageLoading(false);
+          }
+        }}>
           <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 bg-black/95">
             <div className="relative w-full h-full flex items-center justify-center">
+              {imageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                </div>
+              )}
               {fullScreenImage && (
                 <div className="relative max-w-full max-h-[90vh] flex flex-col items-center gap-4">
                   <img
                     src={getFullImageUrl(fullScreenImage)}
                     alt={fullScreenImage.title || "Drawing"}
                     className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => setImageLoading(false)}
+                    style={{ opacity: imageLoading ? 0 : 1, transition: 'opacity 0.3s' }}
                   />
                   <div className="flex items-center gap-3 bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full">
                     <Avatar className="h-8 w-8">
