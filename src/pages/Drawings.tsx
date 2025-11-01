@@ -870,7 +870,7 @@ export default function Drawings() {
             <div className="absolute inset-0 bg-white/60 backdrop-blur-xl" />
             
             {/* Content */}
-            <div className="relative w-full h-full flex flex-col items-center justify-center p-4 sm:p-8 gap-6">
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-8 sm:p-12 gap-4 sm:gap-6">
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center z-10">
                   <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/30 border-t-primary"></div>
@@ -880,11 +880,11 @@ export default function Drawings() {
               {fullScreenImage && (
                 <>
                   {/* Main image */}
-                  <div className="flex-1 w-full flex items-center justify-center">
+                  <div className="flex-1 w-full flex items-center justify-center max-h-[55vh]">
                     <img
                       src={getFullImageUrl(fullScreenImage)}
                       alt={fullScreenImage.title || "Drawing"}
-                      className="max-w-[90vw] max-h-[60vh] object-contain rounded-xl shadow-2xl"
+                      className="max-w-[80vw] max-h-[55vh] object-contain rounded-xl shadow-2xl"
                       onLoad={() => setImageLoading(false)}
                       onError={() => setImageLoading(false)}
                       style={{ 
