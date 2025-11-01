@@ -1,4 +1,4 @@
-import { Home, Image, BookOpen, Users, Settings as SettingsIcon } from "lucide-react";
+import { Home, Image, BookOpen, Users, Settings as SettingsIcon, Mic } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -14,8 +14,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const navItems = [
   { title: "Home", url: "/", icon: Home, key: "app.title" },
-  { title: "Gallery", url: "/drawings", icon: Image, key: "drawings.title" },
+  { title: "Record", url: "/record", icon: Mic, key: "record.title" },
   { title: "Notes", url: "/notes", icon: BookOpen, key: "notes.title" },
+  { title: "Gallery", url: "/drawings", icon: Image, key: "drawings.title" },
   { title: "Children", url: "/children", icon: Users, key: "children.title" },
   { title: "Settings", url: "/settings", icon: SettingsIcon, key: "settings.title" },
 ];
