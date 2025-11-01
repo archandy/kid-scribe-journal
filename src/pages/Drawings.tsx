@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, ArrowLeft, Trash2 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Child {
   id: string;
@@ -36,6 +36,8 @@ export default function Drawings() {
   const [uploading, setUploading] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [familyId, setFamilyId] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -88,8 +90,8 @@ export default function Drawings() {
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || !event.target.files[0] || !selectedChild || !familyId) return;
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || !event.target.files[0]) return;
 
     const file = event.target.files[0];
     if (!file.type.startsWith("image/")) {
@@ -97,18 +99,29 @@ export default function Drawings() {
       return;
     }
 
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !selectedChild || !familyId) return;
+
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const fileExt = file.name.split(".").pop();
+      const fileExt = selectedFile.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${familyId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("drawings")
-        .upload(filePath, file);
+        .upload(filePath, selectedFile);
 
       if (uploadError) throw uploadError;
 
@@ -126,6 +139,8 @@ export default function Drawings() {
       toast({ title: t("drawings.uploadSuccess") });
       setUploadDialogOpen(false);
       setSelectedChild("");
+      setPreviewImage(null);
+      setSelectedFile(null);
       fetchData();
     } catch (error) {
       console.error("Error uploading:", error);
@@ -189,28 +204,55 @@ export default function Drawings() {
                 {t("drawings.upload")}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>{t("drawings.upload")}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
+                  <label className="text-sm font-medium mb-3 block">
                     {t("drawings.selectChild")}
                   </label>
-                  <Select value={selectedChild} onValueChange={setSelectedChild}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {children.map((child) => (
-                        <SelectItem key={child.id} value={child.id}>
+                  <div className="grid grid-cols-3 gap-3">
+                    {children.map((child) => (
+                      <button
+                        key={child.id}
+                        onClick={() => setSelectedChild(child.id)}
+                        className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                          selectedChild === child.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <Avatar className="h-12 w-12">
+                          {child.photo_url && (
+                            <AvatarImage src={child.photo_url} alt={child.name} />
+                          )}
+                          <AvatarFallback className="text-2xl">
+                            {child.photo_emoji || child.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs font-medium truncate w-full text-center">
                           {child.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {previewImage && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium block">
+                      {t("drawings.preview")}
+                    </label>
+                    <img
+                      src={previewImage}
+                      alt="Preview"
+                      className="w-full h-48 object-contain rounded-lg border"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     {t("drawings.selectFile")}
@@ -218,12 +260,19 @@ export default function Drawings() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleUpload}
-                    disabled={!selectedChild || uploading}
-                    className="w-full"
+                    onChange={handleFileSelect}
+                    disabled={uploading}
+                    className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
                   />
                 </div>
-                {uploading && <p className="text-sm text-muted-foreground">{t("drawings.uploading")}</p>}
+
+                <Button
+                  onClick={handleUpload}
+                  disabled={!selectedChild || !selectedFile || uploading}
+                  className="w-full"
+                >
+                  {uploading ? t("drawings.uploading") : t("drawings.uploadButton")}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
