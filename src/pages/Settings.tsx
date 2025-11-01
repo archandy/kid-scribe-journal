@@ -5,12 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Home, Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users, Image, Mic, BookOpen } from "lucide-react";
+import { Link as LinkIcon, CheckCircle2, XCircle, LogOut, Users, Image, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import LanguageSelector from "@/components/LanguageSelector";
 import FamilyManagement from "@/components/FamilyManagement";
 import { z } from "zod";
+import { Layout } from "@/components/Layout";
 
 // Validation schema for Notion database ID
 const databaseIdSchema = z.string()
@@ -239,34 +239,23 @@ export default function Settings() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/')}
-              title={t('common.home')}
-            >
-              <Home className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
-          </div>
-          <LanguageSelector />
+    <Layout>
+      <div className="max-w-2xl mx-auto px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground">{t('settings.title')}</h1>
         </div>
 
         <div className="space-y-4">
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
+          <Card className="border-border shadow-sm overflow-hidden">
             <div className="flex">
-              <div className="w-24 bg-gradient-accent flex items-center justify-center shrink-0">
-                <Users className="h-10 w-10 text-white" />
+              <div className="w-20 bg-secondary flex items-center justify-center shrink-0">
+                <Users className="h-8 w-8 text-foreground" />
               </div>
               <div className="flex-1">
                 <CardHeader>
@@ -291,10 +280,10 @@ export default function Settings() {
             </div>
           </Card>
 
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
+          <Card className="border-border shadow-sm overflow-hidden">
             <div className="flex">
-              <div className="w-24 bg-gradient-playful flex items-center justify-center shrink-0">
-                <Image className="h-10 w-10 text-white" />
+              <div className="w-20 bg-secondary flex items-center justify-center shrink-0">
+                <Image className="h-8 w-8 text-foreground" />
               </div>
               <div className="flex-1">
                 <CardHeader>
@@ -319,10 +308,10 @@ export default function Settings() {
             </div>
           </Card>
 
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
+          <Card className="border-border shadow-sm overflow-hidden">
             <div className="flex">
-              <div className="w-24 bg-gradient-hero flex items-center justify-center shrink-0">
-                <BookOpen className="h-10 w-10 text-white" />
+              <div className="w-20 bg-secondary flex items-center justify-center shrink-0">
+                <BookOpen className="h-8 w-8 text-foreground" />
               </div>
               <div className="flex-1">
                 <CardHeader>
@@ -349,7 +338,7 @@ export default function Settings() {
 
           <FamilyManagement />
 
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
+          <Card className="border-border shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LinkIcon className="h-5 w-5" />
@@ -419,7 +408,7 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur">
+          <Card className="border-border shadow-sm">
             <CardHeader>
               <CardTitle>{t('settings.account')}</CardTitle>
             </CardHeader>
@@ -432,6 +421,6 @@ export default function Settings() {
           </Card>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

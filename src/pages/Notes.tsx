@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
 import NotesList from "@/components/NotesList";
 import HashtagBubbleChart from "@/components/HashtagBubbleChart";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Layout } from "@/components/Layout";
 
 interface Child {
   id: string;
@@ -43,35 +43,20 @@ const Notes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      {/* Header */}
-      <header className="p-4 border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/')}
-            className="rounded-full"
-            title="Home"
-          >
-            <Home className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              {t('notes.title')}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t('notes.subtitle')}
-            </p>
-          </div>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {t('notes.title')}
+          </h1>
+          <p className="text-muted-foreground">
+            {t('notes.subtitle')}
+          </p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
           </div>
         ) : (
           <Tabs value={selectedChild} onValueChange={setSelectedChild} className="w-full">
@@ -97,8 +82,8 @@ const Notes = () => {
             ))}
           </Tabs>
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

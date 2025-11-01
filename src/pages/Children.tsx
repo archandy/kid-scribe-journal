@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { z } from "zod";
+import { Layout } from "@/components/Layout";
 
 // Server-side validation schema
 const childSchema = z.object({
@@ -211,24 +212,15 @@ const Children = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/settings")}
-            title="Home"
-          >
-            <Home className="h-5 w-5" />
+    <Layout>
+      <div className="max-w-2xl mx-auto px-8 py-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-foreground">{t('children.title')}</h1>
+          <Button onClick={handleAdd} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            {t('children.addChild')}
           </Button>
-          <h1 className="text-3xl font-bold">{t('children.title')}</h1>
         </div>
-
-        <Button onClick={handleAdd} className="w-full" size="lg">
-          <Plus className="mr-2 h-5 w-5" />
-          {t('children.addChild')}
-        </Button>
 
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
@@ -316,7 +308,7 @@ const Children = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </div>
+    </Layout>
   );
 };
 

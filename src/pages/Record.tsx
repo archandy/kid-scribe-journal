@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Settings as SettingsIcon, LogOut, BookOpen } from "lucide-react";
+import { Mic, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import ReviewSheet from "@/components/ReviewSheet";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import LanguageSelector from "@/components/LanguageSelector";
+import { Layout } from "@/components/Layout";
 
 const Record = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -429,55 +429,17 @@ const Record = () => {
 
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex flex-col">
-      {/* Header */}
-      <header className="p-4 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            {t('app.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('app.subtitle')}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <LanguageSelector />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/notes')}
-            className="rounded-full"
-          >
-            <BookOpen className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/settings')}
-            className="rounded-full"
-          >
-            <SettingsIcon className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="rounded-full"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
+    <Layout>
+      <div className="h-full flex flex-col">
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
         {/* Step Progress */}
         <div className="flex items-center gap-2">
           {PROMPTS.map((_, index) => (
@@ -494,7 +456,7 @@ const Record = () => {
         {/* Current Step Prompt */}
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">{t('record.step')} {currentStep + 1} {t('record.of')} 2</p>
-          <h2 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold text-foreground">
             {PROMPTS[currentStep]}
           </h2>
           {currentStep === 1 && (
@@ -554,8 +516,8 @@ const Record = () => {
               size="lg"
               onClick={startRecording}
               className={cn(
-                "h-24 w-24 rounded-full bg-gradient-accent shadow-accent-glow",
-                "hover:shadow-accent-glow hover:scale-105",
+                "h-24 w-24 rounded-full bg-primary text-primary-foreground shadow-md",
+                "hover:shadow-lg hover:scale-105",
                 "transition-all duration-300"
               )}
             >
@@ -566,8 +528,8 @@ const Record = () => {
               size="lg"
               onClick={stopRecording}
               className={cn(
-                "h-24 w-24 rounded-full bg-destructive shadow-strong",
-                "animate-pulse-glow",
+                "h-24 w-24 rounded-full bg-destructive text-destructive-foreground shadow-md",
+                "animate-pulse",
                 "hover:scale-105 transition-transform"
               )}
             >
@@ -607,7 +569,8 @@ const Record = () => {
           }}
         />
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 
