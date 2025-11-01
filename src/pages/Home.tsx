@@ -64,14 +64,19 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10 flex flex-col relative overflow-hidden">
+      {/* Playful background elements */}
+      <div className="absolute top-10 right-20 w-40 h-40 bg-gradient-fun rounded-full opacity-20 blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 left-20 w-32 h-32 bg-gradient-playful rounded-full opacity-20 blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-gradient-accent rounded-full opacity-15 blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      
       {/* Header */}
-      <header className="p-4 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between">
+      <header className="p-4 border-b border-border/30 bg-card/30 backdrop-blur-lg flex items-center justify-between relative z-10">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            {t('app.title')}
+          <h1 className="text-2xl md:text-3xl font-black bg-gradient-fun bg-clip-text text-transparent">
+            ✨ {t('app.title')} ✨
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-1 font-medium">
             {t('app.subtitle')}
           </p>
         </div>
@@ -79,7 +84,7 @@ const Home = () => {
           <LanguageSelector />
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-gradient-playful hover:text-white hover:scale-110 transition-all duration-300">
                 {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </SheetTrigger>
@@ -148,57 +153,66 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
-        <div className="text-center mb-4">
-          <h2 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-2">
-            {t('app.welcome')}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 gap-6 relative z-10">
+        <div className="text-center mb-4 animate-fade-in">
+          <h2 className="text-3xl md:text-4xl font-black bg-gradient-playful bg-clip-text text-transparent mb-3">
+            🌈 {t('app.welcome')} 🌈
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg font-medium">
             {t('app.chooseAction')}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
           {/* Record Note Card */}
           <button
             onClick={() => navigate('/record')}
-            className="group relative overflow-hidden rounded-2xl bg-card border border-border p-8 hover:shadow-accent-glow transition-all duration-300 hover:scale-105 text-left"
+            className="group relative overflow-hidden rounded-3xl bg-gradient-accent border-4 border-white shadow-strong p-10 hover:shadow-accent-glow transition-all duration-500 hover:scale-110 hover:-rotate-2 text-left animate-scale-in"
           >
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-gradient-accent flex items-center justify-center shadow-accent-glow group-hover:shadow-strong transition-all">
-                <Mic className="h-10 w-10 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="flex flex-col items-center text-center gap-5 relative z-10">
+              <div className="h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-strong group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 ring-4 ring-white/30">
+                <Mic className="h-12 w-12 text-white drop-shadow-lg" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold mb-2 bg-gradient-hero bg-clip-text text-transparent">
-                  {t('home.recordNote')}
+                <h3 className="text-2xl md:text-3xl font-black mb-3 text-white drop-shadow-lg">
+                  🎤 {t('home.recordNote')}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm md:text-base text-white/90 font-medium">
                   {t('home.recordDescription')}
                 </p>
               </div>
+            </div>
+            <div className="absolute top-4 right-4 text-3xl animate-bounce opacity-0 group-hover:opacity-100 transition-opacity">
+              ✨
             </div>
           </button>
 
           {/* Upload Drawing Card */}
           <button
             onClick={() => navigate('/drawings')}
-            className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:shadow-accent-glow transition-all duration-300 hover:scale-105 text-left"
+            className="group relative overflow-hidden rounded-3xl bg-gradient-playful border-4 border-white shadow-strong p-10 hover:shadow-accent-glow transition-all duration-500 hover:scale-110 hover:rotate-2 text-left animate-scale-in"
+            style={{ animationDelay: '0.1s' }}
           >
-            <div className="flex flex-col items-center text-center gap-4 p-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="flex flex-col items-center text-center gap-5 relative z-10">
               <div 
-                className="h-20 w-20 rounded-full flex items-center justify-center shadow-medium group-hover:shadow-strong transition-all bg-cover bg-center relative"
+                className="h-24 w-24 rounded-full flex items-center justify-center shadow-strong group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500 bg-cover bg-center relative ring-4 ring-white/30"
                 style={{ backgroundImage: `url(${galleryThumbnail})` }}
               >
-                <div className="absolute inset-0 rounded-full bg-gradient-secondary/30"></div>
+                <div className="absolute inset-0 rounded-full bg-white/30 backdrop-blur-[2px]"></div>
               </div>
               <div>
-                <h3 className="text-2xl font-bold mb-2 bg-gradient-hero bg-clip-text text-transparent">
-                  {t('home.uploadDrawing')}
+                <h3 className="text-2xl md:text-3xl font-black mb-3 text-white drop-shadow-lg">
+                  🎨 {t('home.uploadDrawing')}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm md:text-base text-white/90 font-medium">
                   {t('home.drawingDescription')}
                 </p>
               </div>
+            </div>
+            <div className="absolute top-4 left-4 text-3xl animate-bounce opacity-0 group-hover:opacity-100 transition-opacity" style={{ animationDelay: '0.2s' }}>
+              🌟
             </div>
           </button>
         </div>

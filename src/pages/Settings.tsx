@@ -293,7 +293,7 @@ export default function Settings() {
 
           <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
             <div className="flex">
-              <div className="w-24 bg-gradient-secondary flex items-center justify-center shrink-0">
+              <div className="w-24 bg-gradient-playful flex items-center justify-center shrink-0">
                 <Image className="h-10 w-10 text-white" />
               </div>
               <div className="flex-1">
