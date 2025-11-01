@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { toast } from "sonner";
+import galleryThumbnail from "@/assets/gallery-thumbnail.jpg";
 import {
   Sheet,
   SheetContent,
@@ -181,11 +182,14 @@ const Home = () => {
           {/* Upload Drawing Card */}
           <button
             onClick={() => navigate('/drawings')}
-            className="group relative overflow-hidden rounded-2xl bg-card border border-border p-8 hover:shadow-accent-glow transition-all duration-300 hover:scale-105 text-left"
+            className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:shadow-accent-glow transition-all duration-300 hover:scale-105 text-left"
           >
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="h-20 w-20 rounded-full bg-gradient-secondary flex items-center justify-center shadow-medium group-hover:shadow-strong transition-all">
-                <ImagePlus className="h-10 w-10 text-white" />
+            <div className="flex flex-col items-center text-center gap-4 p-8">
+              <div 
+                className="h-20 w-20 rounded-full flex items-center justify-center shadow-medium group-hover:shadow-strong transition-all bg-cover bg-center relative"
+                style={{ backgroundImage: `url(${galleryThumbnail})` }}
+              >
+                <div className="absolute inset-0 rounded-full bg-gradient-secondary/30"></div>
               </div>
               <div>
                 <h3 className="text-2xl font-bold mb-2 bg-gradient-hero bg-clip-text text-transparent">

@@ -11,7 +11,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import FamilyManagement from "@/components/FamilyManagement";
 import { z } from "zod";
-import galleryThumbnail from "@/assets/gallery-thumbnail.jpg";
 
 // Validation schema for Notion database ID
 const databaseIdSchema = z.string()
@@ -294,11 +293,8 @@ export default function Settings() {
 
           <Card className="border-border/50 shadow-soft bg-card/50 backdrop-blur overflow-hidden">
             <div className="flex">
-              <div 
-                className="w-24 flex items-center justify-center shrink-0 bg-cover bg-center relative"
-                style={{ backgroundImage: `url(${galleryThumbnail})` }}
-              >
-                <div className="absolute inset-0 bg-black/20"></div>
+              <div className="w-24 bg-gradient-secondary flex items-center justify-center shrink-0">
+                <Image className="h-10 w-10 text-white" />
               </div>
               <div className="flex-1">
                 <CardHeader>
