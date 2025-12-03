@@ -58,6 +58,48 @@ export type Database = {
           },
         ]
       }
+      drawing_analyses: {
+        Row: {
+          analysis: Json
+          child_id: string
+          created_at: string
+          drawing_count: number
+          family_id: string
+          id: string
+        }
+        Insert: {
+          analysis: Json
+          child_id: string
+          created_at?: string
+          drawing_count?: number
+          family_id: string
+          id?: string
+        }
+        Update: {
+          analysis?: Json
+          child_id?: string
+          created_at?: string
+          drawing_count?: number
+          family_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_analyses_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_analyses_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drawings: {
         Row: {
           child_id: string

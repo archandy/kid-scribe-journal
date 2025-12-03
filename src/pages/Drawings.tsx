@@ -161,13 +161,12 @@ export default function Drawings() {
         });
         setDrawings(drawingsWithUrls);
         
-        // Group drawings by date
+        // Group drawings by month
         const grouped = drawingsWithUrls.reduce((acc: GroupedDrawings[], drawing) => {
           const date = new Date(drawing.photo_date || drawing.created_at);
           const dateStr = date.toLocaleDateString('ja-JP', { 
             year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+            month: 'long'
           });
           
           const existingGroup = acc.find(g => g.date === dateStr);
@@ -941,6 +940,7 @@ export default function Drawings() {
         <BulkDrawingAnalysis
           open={showAnalysisDialog}
           onOpenChange={setShowAnalysisDialog}
+          familyId={familyId}
           childrenWithDrawings={children.map(child => ({
             child,
             imageUrls: drawings
