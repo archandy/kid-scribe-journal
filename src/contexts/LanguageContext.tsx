@@ -215,6 +215,17 @@ const translations: Record<Language, Record<string, string>> = {
     'notFound.title': '404',
     'notFound.message': 'Oops! Page not found',
     'notFound.returnHome': 'Return to Home',
+    
+    // Drawing Analysis
+    'analysis.description': 'Get AI insights about this drawing',
+    'analysis.analyze': 'Analyze Drawing',
+    'analysis.analyzing': 'Analyzing drawing...',
+    'analysis.reportFor': 'Report for',
+    'analysis.emotional': 'Emotional Indicators',
+    'analysis.personality': 'Personality Traits',
+    'analysis.developmental': 'Developmental Signs',
+    'analysis.creativity': 'Creativity & Imagination',
+    'analysis.error': 'Failed to analyze drawing',
   },
   ja: {
     // Header
@@ -419,6 +430,17 @@ const translations: Record<Language, Record<string, string>> = {
     'notFound.title': '404',
     'notFound.message': 'おっと！ページが見つかりません',
     'notFound.returnHome': 'ホームに戻る',
+    
+    // Drawing Analysis
+    'analysis.description': 'この絵についてAIインサイトを取得',
+    'analysis.analyze': '絵を分析',
+    'analysis.analyzing': '絵を分析中...',
+    'analysis.reportFor': 'レポート:',
+    'analysis.emotional': '感情的な指標',
+    'analysis.personality': '性格特性',
+    'analysis.developmental': '発達の兆候',
+    'analysis.creativity': '創造性と想像力',
+    'analysis.error': '絵の分析に失敗しました',
   },
   ko: {
     // Header
@@ -623,6 +645,17 @@ const translations: Record<Language, Record<string, string>> = {
     'notFound.title': '404',
     'notFound.message': '앗! 페이지를 찾을 수 없습니다',
     'notFound.returnHome': '홈으로 돌아가기',
+    
+    // Drawing Analysis
+    'analysis.description': '이 그림에 대한 AI 인사이트 얻기',
+    'analysis.analyze': '그림 분석',
+    'analysis.analyzing': '그림 분석 중...',
+    'analysis.reportFor': '보고서:',
+    'analysis.emotional': '감정적 지표',
+    'analysis.personality': '성격 특성',
+    'analysis.developmental': '발달 징후',
+    'analysis.creativity': '창의성과 상상력',
+    'analysis.error': '그림 분석 실패',
   },
 };
 

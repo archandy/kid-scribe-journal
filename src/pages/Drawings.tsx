@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Check, Trash2, Download } from "lucide-react";
+import { Upload, Check, Trash2, Download, Sparkles } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Layout } from "@/components/Layout";
+import { DrawingAnalysis } from "@/components/DrawingAnalysis";
 
 import * as exifr from "exifr";
 
@@ -59,6 +60,7 @@ export default function Drawings() {
   const [loadedCount, setLoadedCount] = useState(30); // Load 30 images initially
   const [hasMore, setHasMore] = useState(true);
   const [imageLoading, setImageLoading] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -854,6 +856,7 @@ export default function Drawings() {
           if (!open) {
             setFullScreenImage(null);
             setImageLoading(false);
+            setShowAnalysis(false);
           }
         }}>
           <DialogContent className="max-w-full w-full h-full p-0 border-0 bg-transparent overflow-hidden">
@@ -878,46 +881,65 @@ export default function Drawings() {
               
               {fullScreenImage && (
                 <>
-                  {/* Main image */}
-                  <div className="flex-1 w-full flex items-center justify-center max-h-[55vh]">
-                    <img
-                      src={getFullImageUrl(fullScreenImage)}
-                      alt={fullScreenImage.title || "Drawing"}
-                      className="max-w-[80vw] max-h-[55vh] object-contain rounded-xl shadow-2xl"
-                      onLoad={() => setImageLoading(false)}
-                      onError={() => setImageLoading(false)}
-                      style={{ 
-                        opacity: imageLoading ? 0 : 1, 
-                        transition: 'opacity 0.3s ease-in-out'
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Options card */}
-                  <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden">
-                    {/* Child name */}
-                    <div className="px-6 py-4 text-center border-b border-border/50">
-                      <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'serif' }}>
-                        {fullScreenImage.children.name}
-                      </h2>
+                  {/* Main image - hide when showing analysis */}
+                  {!showAnalysis && (
+                    <div className="flex-1 w-full flex items-center justify-center max-h-[55vh]">
+                      <img
+                        src={getFullImageUrl(fullScreenImage)}
+                        alt={fullScreenImage.title || "Drawing"}
+                        className="max-w-[80vw] max-h-[55vh] object-contain rounded-xl shadow-2xl"
+                        onLoad={() => setImageLoading(false)}
+                        onError={() => setImageLoading(false)}
+                        style={{ 
+                          opacity: imageLoading ? 0 : 1, 
+                          transition: 'opacity 0.3s ease-in-out'
+                        }}
+                      />
                     </div>
-                    
-                    {/* Download button */}
-                    <button
-                      onClick={() => handleDownload(fullScreenImage)}
-                      className="w-full px-6 py-5 flex items-center justify-center border-b border-border/50 hover:bg-black/5 transition-colors"
-                    >
-                      <Download className="h-7 w-7 text-foreground" />
-                    </button>
-                    
-                    {/* Delete button */}
-                    <button
-                      onClick={() => handleDelete(fullScreenImage)}
-                      className="w-full px-6 py-5 flex items-center justify-center hover:bg-black/5 transition-colors"
-                    >
-                      <Trash2 className="h-7 w-7 text-destructive" />
-                    </button>
-                  </div>
+                  )}
+                  
+                  {/* Show analysis or options */}
+                  {showAnalysis ? (
+                    <DrawingAnalysis 
+                      imageUrl={getFullImageUrl(fullScreenImage)}
+                      childName={fullScreenImage.children.name}
+                      onClose={() => setShowAnalysis(false)}
+                    />
+                  ) : (
+                    /* Options card */
+                    <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden">
+                      {/* Child name */}
+                      <div className="px-6 py-4 text-center border-b border-border/50">
+                        <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'serif' }}>
+                          {fullScreenImage.children.name}
+                        </h2>
+                      </div>
+                      
+                      {/* Analyze button */}
+                      <button
+                        onClick={() => setShowAnalysis(true)}
+                        className="w-full px-6 py-5 flex items-center justify-center border-b border-border/50 hover:bg-black/5 transition-colors"
+                      >
+                        <Sparkles className="h-7 w-7 text-primary" />
+                      </button>
+                      
+                      {/* Download button */}
+                      <button
+                        onClick={() => handleDownload(fullScreenImage)}
+                        className="w-full px-6 py-5 flex items-center justify-center border-b border-border/50 hover:bg-black/5 transition-colors"
+                      >
+                        <Download className="h-7 w-7 text-foreground" />
+                      </button>
+                      
+                      {/* Delete button */}
+                      <button
+                        onClick={() => handleDelete(fullScreenImage)}
+                        className="w-full px-6 py-5 flex items-center justify-center hover:bg-black/5 transition-colors"
+                      >
+                        <Trash2 className="h-7 w-7 text-destructive" />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
