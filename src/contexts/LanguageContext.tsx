@@ -217,15 +217,20 @@ const translations: Record<Language, Record<string, string>> = {
     'notFound.returnHome': 'Return to Home',
     
     // Drawing Analysis
-    'analysis.description': 'Get AI insights about this drawing',
+    'analysis.title': 'Drawing Analysis',
+    'analysis.description': 'Get AI insights about your child\'s drawings',
     'analysis.analyze': 'Analyze Drawing',
-    'analysis.analyzing': 'Analyzing drawing...',
+    'analysis.analyzeThis': 'Analyze This Child',
+    'analysis.analyzeAll': 'Analyze All',
+    'analysis.analyzing': 'Analyzing drawings...',
     'analysis.reportFor': 'Report for',
     'analysis.emotional': 'Emotional Indicators',
     'analysis.personality': 'Personality Traits',
     'analysis.developmental': 'Developmental Signs',
     'analysis.creativity': 'Creativity & Imagination',
-    'analysis.error': 'Failed to analyze drawing',
+    'analysis.error': 'Failed to analyze drawings',
+    'analysis.photosAnalyzed': 'Photos analyzed',
+    'analysis.maxPhotos': 'max 10',
   },
   ja: {
     // Header
@@ -432,8 +437,11 @@ const translations: Record<Language, Record<string, string>> = {
     'notFound.returnHome': 'ホームに戻る',
     
     // Drawing Analysis
-    'analysis.description': 'この絵についてAIインサイトを取得',
+    'analysis.title': '絵の分析',
+    'analysis.description': 'お子様の絵についてAIインサイトを取得',
     'analysis.analyze': '絵を分析',
+    'analysis.analyzeThis': 'この子を分析',
+    'analysis.analyzeAll': '全員を分析',
     'analysis.analyzing': '絵を分析中...',
     'analysis.reportFor': 'レポート:',
     'analysis.emotional': '感情的な指標',
@@ -441,6 +449,8 @@ const translations: Record<Language, Record<string, string>> = {
     'analysis.developmental': '発達の兆候',
     'analysis.creativity': '創造性と想像力',
     'analysis.error': '絵の分析に失敗しました',
+    'analysis.photosAnalyzed': '分析した写真',
+    'analysis.maxPhotos': '最大10枚',
   },
   ko: {
     // Header
@@ -647,8 +657,11 @@ const translations: Record<Language, Record<string, string>> = {
     'notFound.returnHome': '홈으로 돌아가기',
     
     // Drawing Analysis
-    'analysis.description': '이 그림에 대한 AI 인사이트 얻기',
+    'analysis.title': '그림 분석',
+    'analysis.description': '자녀의 그림에 대한 AI 인사이트 얻기',
     'analysis.analyze': '그림 분석',
+    'analysis.analyzeThis': '이 아이 분석',
+    'analysis.analyzeAll': '전체 분석',
     'analysis.analyzing': '그림 분석 중...',
     'analysis.reportFor': '보고서:',
     'analysis.emotional': '감정적 지표',
@@ -656,6 +669,8 @@ const translations: Record<Language, Record<string, string>> = {
     'analysis.developmental': '발달 징후',
     'analysis.creativity': '창의성과 상상력',
     'analysis.error': '그림 분석 실패',
+    'analysis.photosAnalyzed': '분석된 사진',
+    'analysis.maxPhotos': '최대 10장',
   },
 };
 
