@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const getSystemPrompt = (language: string, childName: string) => {
+const getSystemPrompt = (language: string, childName: string, imageCount: number) => {
   const languageInstruction = language === 'ja' 
     ? 'すべての回答は日本語で行ってください。'
     : language === 'ko'
@@ -15,8 +15,9 @@ const getSystemPrompt = (language: string, childName: string) => {
   return `You are a child development specialist who analyzes children's drawings.
 ${languageInstruction}
 
-Analyze this child's drawing for ${childName} and provide a gentle, parent-friendly report.
+Analyze ${imageCount > 1 ? 'these drawings' : 'this drawing'} for ${childName} and provide a gentle, parent-friendly report.
 Focus on what the artwork may express about the child's current emotional state, personality traits, developmental indicators, and creativity.
+${imageCount > 1 ? 'Look for patterns across the drawings to get a holistic view of the child.' : ''}
 
 Provide insights in the following JSON structure:
 {
@@ -51,11 +52,14 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl, childName, language = 'en' } = await req.json();
+    const { imageUrls, childName, language = 'en' } = await req.json();
 
-    if (!imageUrl || !childName) {
+    // Support both single imageUrl and multiple imageUrls
+    const urls = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+
+    if (!urls.length || !childName) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: imageUrl, childName' }),
+        JSON.stringify({ error: 'Missing required fields: imageUrls, childName' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -65,7 +69,24 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log(`Analyzing drawing for ${childName} in ${language}`);
+    console.log(`Analyzing ${urls.length} drawing(s) for ${childName} in ${language}`);
+
+    // Build content array with text and all images
+    const userContent: any[] = [
+      {
+        type: 'text',
+        text: `Please analyze ${urls.length > 1 ? 'these drawings' : 'this drawing'} by ${childName}.`
+      }
+    ];
+
+    // Add all images (limit to 10 to avoid token limits)
+    const limitedUrls = urls.slice(0, 10);
+    for (const url of limitedUrls) {
+      userContent.push({
+        type: 'image_url',
+        image_url: { url }
+      });
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -78,22 +99,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: getSystemPrompt(language, childName)
+            content: getSystemPrompt(language, childName, limitedUrls.length)
           },
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Please analyze this drawing by ${childName}.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl
-                }
-              }
-            ]
+            content: userContent
           }
         ],
       }),
