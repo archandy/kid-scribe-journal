@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles, Heart, Brain, Palette, Star, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, Heart, Brain, Palette, Star, Loader2, X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AnalysisResult {
@@ -43,15 +43,17 @@ interface ChildAnalysis {
   analysis: AnalysisResult | null;
   loading: boolean;
   error: string | null;
+  saved: boolean;
 }
 
 interface BulkDrawingAnalysisProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   childrenWithDrawings: { child: Child; imageUrls: string[] }[];
+  familyId: string | null;
 }
 
-export function BulkDrawingAnalysis({ open, onOpenChange, childrenWithDrawings }: BulkDrawingAnalysisProps) {
+export function BulkDrawingAnalysis({ open, onOpenChange, childrenWithDrawings, familyId }: BulkDrawingAnalysisProps) {
   const { language, t } = useLanguage();
   const { toast } = useToast();
   const [analyses, setAnalyses] = useState<ChildAnalysis[]>([]);
@@ -65,11 +67,33 @@ export function BulkDrawingAnalysis({ open, onOpenChange, childrenWithDrawings }
         imageUrls,
         analysis: null,
         loading: false,
-        error: null
+        error: null,
+        saved: false
       })));
       setCurrentIndex(0);
     }
   }, [open, childrenWithDrawings]);
+
+  const saveAnalysis = async (childId: string, analysis: AnalysisResult, drawingCount: number) => {
+    if (!familyId) return false;
+    
+    try {
+      const { error } = await supabase
+        .from("drawing_analyses")
+        .insert({
+          family_id: familyId,
+          child_id: childId,
+          analysis: analysis as unknown as Record<string, unknown>,
+          drawing_count: drawingCount
+        } as any);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error saving analysis:", error);
+      return false;
+    }
+  };
 
   const analyzeChild = async (index: number) => {
     const childData = analyses[index];
@@ -91,9 +115,20 @@ export function BulkDrawingAnalysis({ open, onOpenChange, childrenWithDrawings }
       if (fnError) throw fnError;
       if (data.error) throw new Error(data.error);
 
+      // Save to database
+      const saved = await saveAnalysis(
+        childData.child.id,
+        data.analysis,
+        Math.min(childData.imageUrls.length, 10)
+      );
+
       setAnalyses(prev => prev.map((a, i) => 
-        i === index ? { ...a, analysis: data.analysis, loading: false } : a
+        i === index ? { ...a, analysis: data.analysis, loading: false, saved } : a
       ));
+
+      if (saved) {
+        toast({ title: t('analysis.saved') });
+      }
     } catch (err) {
       console.error('Analysis error:', err);
       const message = err instanceof Error ? err.message : t('analysis.error');
@@ -243,7 +278,8 @@ export function BulkDrawingAnalysis({ open, onOpenChange, childrenWithDrawings }
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium">{a.child.name}</span>
-                {a.analysis && <Star className="h-3 w-3 text-primary" />}
+                {a.saved && <Check className="h-3 w-3 text-emerald-500" />}
+                {a.analysis && !a.saved && <Star className="h-3 w-3 text-primary" />}
                 {a.loading && <Loader2 className="h-3 w-3 animate-spin" />}
               </button>
             ))}
